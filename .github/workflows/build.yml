@@ -1,0 +1,89 @@
+name: Build
+
+# Every push and pull request: the patches apply to the pinned engine, and the
+# game builds with Stimpack on macOS, Linux and Windows (the packages are kept
+# as workflow artifacts). A published GitHub release also gets the packages.
+#
+# The automated tests need a copy of Fallout 2's game data, which cannot be
+# put on a public CI runner; run tests/run_tests.py locally before a release.
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  patches:
+    name: Patches apply
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Check engine commit
+        run: |
+          pinned="$(sed -n 's/^commit=//p' engine-version.txt)"
+          actual="$(git -C engine rev-parse HEAD)"
+          test "$pinned" = "$actual" || { echo "engine/ is at $actual, engine-version.txt says $pinned"; exit 1; }
+      - name: Apply patches
+        run: python3 tools/stimpack_tree.py --engine engine --check
+
+  package:
+    name: Package (${{ matrix.name }})
+    needs: patches
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            runner: macos-15
+          - name: Linux
+            runner: ubuntu-22.04
+          - name: Windows
+            runner: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev zlib1g-dev ninja-build
+
+      - name: Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Build and package
+        run: tools/package.sh
+
+      - name: Keep the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: stimpack-${{ matrix.name }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*.sha256
+          retention-days: 14
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        run: |
+          shopt -s nullglob
+          gh release upload "${{ github.event.release.tag_name }}" dist/*.zip dist/*.tar.gz dist/*.sha256 --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

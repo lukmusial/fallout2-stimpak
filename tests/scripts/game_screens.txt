@@ -1,0 +1,15 @@
+# The game's own character screen still works (with --dev-load-game=1): open
+# it, close it, then the Pip-Boy.
+until game 30000
+wait 800
+key c
+wait 1200
+shot character
+key esc
+wait 800
+key p
+wait 1200
+shot pipboy
+key esc
+wait 800
+quit 0

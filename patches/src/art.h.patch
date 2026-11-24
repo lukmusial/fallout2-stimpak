@@ -1,0 +1,28 @@
+Stimpack patch for src/art.h (engine commit c30f1efce64b).
+
+diff --git a/src/art.h b/src/art.h
+index 1dc500b1..28ac4241 100644
+--- a/src/art.h
++++ b/src/art.h
+@@ -15,6 +15,8 @@
+ #include "obj_types.h"
+ #include "proto_types.h"
+ 
++#include <vector>
++
+ namespace fallout {
+ 
+ typedef struct Art {
+@@ -574,6 +576,12 @@ CritterFrameId _art_alias_num(CritterFrameId index);
+ int artCritterFrmIdShouldRun(const FrmId& frmId);
+ int artListIndex(ObjectType objectType, const char* name);
+ Art* artLoad(const char* path);
++
++// Mods: art made in memory for a named image (for example "mainmenu_sp.png")
++// that the game data does not have. The generator fills a palette-indexed,
++// single-frame image; a file of the same name in the data takes precedence.
++using ArtGenerator = bool (*)(int* width, int* height, std::vector<unsigned char>* pixels);
++void artRegisterGenerator(const char* fileName, ArtGenerator generator);
+ int artRead(const char* path, unsigned char* data, size_t size);
+ int artWrite(const char* path, unsigned char* data);
+ 

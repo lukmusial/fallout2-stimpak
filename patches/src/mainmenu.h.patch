@@ -1,0 +1,14 @@
+Stimpack patch for src/mainmenu.h (engine commit c30f1efce64b).
+
+diff --git a/src/mainmenu.h b/src/mainmenu.h
+index b26b434b..41a7ab8b 100644
+--- a/src/mainmenu.h
++++ b/src/mainmenu.h
+@@ -17,6 +17,7 @@ enum MainMenuOption : int {
+     Exit,
+     SelfRun,
+     Options,
++    Stimpack,
+ };
+ 
+ int mainMenuWindowInit();

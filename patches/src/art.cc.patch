@@ -1,0 +1,87 @@
+Stimpack patch for src/art.cc (engine commit c30f1efce64b).
+
+diff --git a/src/art.cc b/src/art.cc
+index 017a14cb..b24d9ff9 100644
+--- a/src/art.cc
++++ b/src/art.cc
+@@ -16,11 +16,14 @@
+ #include "draw.h"
+ #include "game.h"
+ #include "memory.h"
++#include "platform_compat.h"
+ #include "proto.h"
+ #include "settings.h"
+ 
+ #include <algorithm>
+ #include <memory>
++#include <string>
++#include <utility>
+ #include <unordered_map>
+ #include <vector>
+ 
+@@ -1410,6 +1413,52 @@ Art* artLoad(const char* path)
+     return nullptr;
+ }
+ 
++static std::vector<std::pair<std::string, ArtGenerator>>& artGenerators()
++{
++    static std::vector<std::pair<std::string, ArtGenerator>> generators;
++    return generators;
++}
++
++void artRegisterGenerator(const char* fileName, ArtGenerator generator)
++{
++    artGenerators().emplace_back(fileName, generator);
++}
++
++// Art from a registered generator, matched on the file name (any case).
++static Art* artLoadGenerated(const char* path)
++{
++    const char* fileName = path;
++    for (const char* ch = path; *ch != '\0'; ch++) {
++        if (*ch == '\\' || *ch == '/') {
++            fileName = ch + 1;
++        }
++    }
++
++    for (const auto& [name, generator] : artGenerators()) {
++        if (compat_stricmp(name.c_str(), fileName) != 0) {
++            continue;
++        }
++
++        int width = 0;
++        int height = 0;
++        std::vector<unsigned char> pixels;
++        if (!generator(&width, &height, &pixels) || width <= 0 || height <= 0
++            || pixels.size() != static_cast<size_t>(width) * static_cast<size_t>(height)) {
++            debugPrint("ART: generator for %s failed\n", fileName);
++            return nullptr;
++        }
++
++        unsigned char* frameData = nullptr;
++        Art* art = artAllocateSingleFrame(width, height, &frameData);
++        if (art != nullptr) {
++            memcpy(frameData, pixels.data(), pixels.size());
++        }
++        return art;
++    }
++
++    return nullptr;
++}
++
+ static Art* artLoadLocalized(const char* path)
+ {
+     const char* localizedPath;
+@@ -1417,7 +1466,11 @@ static Art* artLoadLocalized(const char* path)
+         ? artLoad(localizedPath)
+         : nullptr;
+ 
+-    return result != nullptr ? result : artLoad(path);
++    if (result == nullptr) {
++        result = artLoad(path);
++    }
++
++    return result != nullptr ? result : artLoadGenerated(path);
+ }
+ 
+ // 0x419FC0

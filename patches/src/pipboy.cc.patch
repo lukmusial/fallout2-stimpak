@@ -1,0 +1,38 @@
+Stimpack patch for src/pipboy.cc (engine commit c30f1efce64b).
+
+diff --git a/src/pipboy.cc b/src/pipboy.cc
+index ac265d2a..c8a3d5c4 100644
+--- a/src/pipboy.cc
++++ b/src/pipboy.cc
+@@ -2795,6 +2795,31 @@ static int pipboyRenderScreensaver()
+ }
+ 
+ // 0x49A5D4
++int questGetCount()
++{
++    // The table is normally loaded when the Pip-Boy opens.
++    if (gQuestDescriptions == nullptr && questInit() == -1) {
++        return 0;
++    }
++    return gQuestDescriptions != nullptr ? gQuestsCount : 0;
++}
++
++bool questGetInfo(int index, QuestInfo* info)
++{
++    if (index < 0 || index >= questGetCount()) {
++        return false;
++    }
++
++    QuestDescription* quest = &(gQuestDescriptions[index]);
++    MessageListItem item;
++    info->location = getmsg(&gMapMessageList, &item, quest->location);
++    info->text = getmsg(&gQuestsMessageList, &item, quest->description);
++    info->gvar = quest->gvar;
++    info->displayThreshold = quest->displayThreshold;
++    info->completedThreshold = quest->completedThreshold;
++    return true;
++}
++
+ static int questInit()
+ {
+     if (gQuestDescriptions != nullptr) {

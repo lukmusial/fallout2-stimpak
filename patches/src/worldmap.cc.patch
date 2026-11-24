@@ -1,0 +1,87 @@
+Stimpack patch for src/worldmap.cc (engine commit c30f1efce64b).
+
+diff --git a/src/worldmap.cc b/src/worldmap.cc
+index 2fa8eac8..2fcdd488 100644
+--- a/src/worldmap.cc
++++ b/src/worldmap.cc
+@@ -7461,6 +7461,80 @@ int wmMapMusicStart()
+     return -1;
+ }
+ 
++int wmStimpackGetAreaCount()
++{
++    return wmMaxAreaNum;
++}
++
++bool wmStimpackAreaHasEntrance(City areaIdx)
++{
++    return cityIsValid(areaIdx) && wmAreaInfoList[areaIdx].entrancesLength > 0;
++}
++
++int wmStimpackGetAreaState(City areaIdx)
++{
++    switch (wmAreaVisitedState(areaIdx)) {
++    case VisitedState::Visited:
++        return 2;
++    case VisitedState::Known:
++    case VisitedState::KnownFo1:
++        return 1;
++    default:
++        return 0;
++    }
++}
++
++void wmStimpackSetAreaState(City areaIdx, int state)
++{
++    if (!cityIsValid(areaIdx)) {
++        return;
++    }
++
++    if (state <= 0) {
++        wmAreaSetVisibleState(areaIdx, CITY_STATE_UNKNOWN, true);
++        wmAreaInfoList[areaIdx].visitedState = VisitedState::Unknown;
++        return;
++    }
++
++    wmAreaSetVisibleState(areaIdx, CITY_STATE_KNOWN, true);
++    // Marking Visited straight from Unknown only reaches Known; go through Known.
++    wmAreaMarkVisitedState(areaIdx, VisitedState::Known);
++    if (state >= 2) {
++        wmAreaMarkVisitedState(areaIdx, VisitedState::Visited);
++    }
++}
++
++int wmStimpackTravelToArea(City areaIdx)
++{
++    if (!wmStimpackAreaHasEntrance(areaIdx)) {
++        return -1;
++    }
++
++    wmStimpackSetAreaState(areaIdx, 2);
++
++    City previousArea = wmGenData.currentAreaId;
++    wmGenData.currentAreaId = areaIdx;
++
++    MapTransition transition;
++    int rc = wmAreaFindFirstValidMap(&transition.map, &transition.elevation, &transition.tile, &transition.rotation);
++    // The map transition teleports the party on the world map only when the
++    // current area differs, so put the old one back first.
++    wmGenData.currentAreaId = previousArea;
++    if (rc == -1) {
++        return -1;
++    }
++
++    if (transition.tile == -1) {
++        // The map's own start position, as a first visit from the world map.
++        transition.elevation = ELEVATION_FIRST;
++        transition.rotation = ROTATION_NE;
++    }
++
++    mapSetTransition(&transition);
++    mapHandleTransition();
++    return mapGetCurrentMap() == transition.map ? 0 : -1;
++}
++
+ // 0x4C5928 wmSetMapMusic
+ int wmSetMapMusic(Map mapIdx, const char* name)
+ {

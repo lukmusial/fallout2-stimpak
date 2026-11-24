@@ -1,0 +1,25 @@
+Stimpack patch for src/dinput.cc (engine commit c30f1efce64b).
+
+diff --git a/src/dinput.cc b/src/dinput.cc
+index 465f59b4..d85dbb76 100644
+--- a/src/dinput.cc
++++ b/src/dinput.cc
+@@ -1,6 +1,7 @@
+ #include "dinput.h"
+ 
+ #include "debug.h"
++#include "dev_automation.h"
+ #include "settings.h"
+ #include "sfall_kb_helpers.h"
+ #include "svga.h"
+@@ -95,6 +96,10 @@ bool mouseDeviceGetData(MouseData* mouseState)
+     // TODO: Move mouse events processing into `GNW95_process_message` and
+     // update mouse position manually.
+     SDL_PumpEvents();
++    if (devAutomationOverrideMouse(mouseState)) {
++        return true;
++    }
++
+     Uint32 buttons = mouseDeviceUsesRelativeMode()
+         ? SDL_GetRelativeMouseState(&(mouseState->x), &(mouseState->y))
+         : SDL_GetMouseState(&(mouseState->x), &(mouseState->y));

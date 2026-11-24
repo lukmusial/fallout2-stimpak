@@ -1,0 +1,5 @@
+# Main menu with the Stimpack button.
+until mainmenu 20000
+wait 1000
+shot menu
+quit 0
