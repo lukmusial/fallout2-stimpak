@@ -1,20 +1,20 @@
 #!/bin/bash
-# Builds a release of Fallout 2 Community Edition with Stimpack and packs it for
+# Builds a release of Fallout 2 Community Edition with Stimpak and packs it for
 # this platform into dist/:
 #
-#   macOS    stimpack-<version>-macos.zip      (the .app, ad-hoc signed)
-#   Linux    stimpack-<version>-linux-x64.tar.gz
-#   Windows  stimpack-<version>-windows-x64.zip (run from Git Bash)
+#   macOS    stimpak-<version>-macos.zip      (the .app, ad-hoc signed)
+#   Linux    stimpak-<version>-linux-x64.tar.gz
+#   Windows  stimpak-<version>-windows-x64.zip (run from Git Bash)
 #
 # Each archive also holds README, INSTALL, LICENSE, an example fallout2.cfg and
-# the English stimpack.msg (a template for translations). No game data is
+# the English stimpak.msg (a template for translations). No game data is
 # included: players need their own copy of Fallout 2.
 set -euo pipefail
 
-STIMPACK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="$(tr -d '[:space:]' <"$STIMPACK_DIR/VERSION")"
-BUILD_DIR="${BUILD_DIR:-$STIMPACK_DIR/build/release}"
-DIST_ROOT="$STIMPACK_DIR/dist"
+STIMPAK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="$(tr -d '[:space:]' <"$STIMPAK_DIR/VERSION")"
+BUILD_DIR="${BUILD_DIR:-$STIMPAK_DIR/build/release}"
+DIST_ROOT="$STIMPAK_DIR/dist"
 
 case "$(uname -s)" in
     Darwin) PLATFORM=macos ;;
@@ -23,10 +23,10 @@ case "$(uname -s)" in
     *) echo "unsupported platform $(uname -s)" >&2; exit 1 ;;
 esac
 
-NAME="stimpack-$VERSION-$PLATFORM"
+NAME="stimpak-$VERSION-$PLATFORM"
 DIST="$DIST_ROOT/$NAME"
 
-"$STIMPACK_DIR/tools/build.sh" Release "$BUILD_DIR"
+"$STIMPAK_DIR/tools/build.sh" Release "$BUILD_DIR"
 cmake --build "$BUILD_DIR" --config Release --target ce-dat-tool
 
 rm -rf "$DIST"
@@ -53,19 +53,19 @@ case "$PLATFORM" in
     linux-x64)
         cp "$(find_tool fallout2-ce)" "$DIST/fallout2-ce"
         objcopy --strip-all "$DIST/fallout2-ce" 2>/dev/null || strip "$DIST/fallout2-ce"
-        "$(find_tool ce-dat-tool)" create "$STIMPACK_DIR/engine/files/ce.dat" "$DIST/ce.dat"
+        "$(find_tool ce-dat-tool)" create "$STIMPAK_DIR/engine/files/ce.dat" "$DIST/ce.dat"
         ;;
     windows-x64)
         cp "$(find_tool fallout2-ce)" "$DIST/fallout2-ce.exe"
-        "$(find_tool ce-dat-tool)" create "$STIMPACK_DIR/engine/files/ce.dat" "$DIST/ce.dat"
+        "$(find_tool ce-dat-tool)" create "$STIMPAK_DIR/engine/files/ce.dat" "$DIST/ce.dat"
         ;;
 esac
 
-cp "$STIMPACK_DIR/README.md" "$DIST/README.md"
-cp "$STIMPACK_DIR/docs/INSTALL.md" "$DIST/INSTALL.md"
-cp "$STIMPACK_DIR/LICENSE.md" "$DIST/LICENSE.md"
-cp "$STIMPACK_DIR/engine/files/fallout2.cfg" "$DIST/EXAMPLE_fallout2.cfg"
-cp "$STIMPACK_DIR/data/text/english/game/stimpack.msg" "$DIST/translations/english/stimpack.msg"
+cp "$STIMPAK_DIR/README.md" "$DIST/README.md"
+cp "$STIMPAK_DIR/docs/INSTALL.md" "$DIST/INSTALL.md"
+cp "$STIMPAK_DIR/LICENSE.md" "$DIST/LICENSE.md"
+cp "$STIMPAK_DIR/engine/files/fallout2.cfg" "$DIST/EXAMPLE_fallout2.cfg"
+cp "$STIMPAK_DIR/data/text/english/game/stimpak.msg" "$DIST/translations/english/stimpak.msg"
 
 cd "$DIST_ROOT"
 case "$PLATFORM" in

@@ -1,4 +1,4 @@
-# Stimpack on slot 1: edit the player, then CANCEL; saved to the first empty
+# Stimpak on slot 1: edit the player, then CANCEL; saved to the first empty
 # slot, which must equal slot 1.
 until mainmenu 20000
 wait 300
@@ -6,7 +6,7 @@ key s
 wait 1200
 key home
 key enter
-until stimpack 30000
+until stimpak 30000
 wait 500
 key c
 wait 1500
@@ -23,7 +23,7 @@ key s
 wait 1200
 key enter
 until input 10000
-text stimpack cancel
+text stimpak cancel
 key enter
 until mainmenu 30000
 quit 0

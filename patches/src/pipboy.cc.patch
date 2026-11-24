@@ -1,4 +1,4 @@
-Stimpack patch for src/pipboy.cc (engine commit c30f1efce64b).
+Stimpak patch for src/pipboy.cc (engine commit c30f1efce64b).
 
 diff --git a/src/pipboy.cc b/src/pipboy.cc
 index ac265d2a..c8a3d5c4 100644

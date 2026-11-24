@@ -1,4 +1,4 @@
-# The Fallout 2 Community Edition commit Stimpack's patches are made against.
+# The Fallout 2 Community Edition commit Stimpak's patches are made against.
 # The engine/ submodule is checked out at this commit.
 url=https://github.com/fallout2-ce/fallout2-ce
 commit=c30f1efce64b96696c150603cc6dfce5d74645cc

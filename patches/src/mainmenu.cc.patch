@@ -1,7 +1,7 @@
-Stimpack patch for src/mainmenu.cc (engine commit c30f1efce64b).
+Stimpak patch for src/mainmenu.cc (engine commit c30f1efce64b).
 
 diff --git a/src/mainmenu.cc b/src/mainmenu.cc
-index f5e5a13f..a6a33f52 100644
+index f5e5a13f..de4e9e96 100644
 --- a/src/mainmenu.cc
 +++ b/src/mainmenu.cc
 @@ -9,6 +9,7 @@
@@ -16,8 +16,8 @@ index f5e5a13f..a6a33f52 100644
  #include "platform_compat.h"
  #include "preferences.h"
  #include "settings.h"
-+#include "stimpack.h"
-+#include "stimpack_art.h"
++#include "stimpak.h"
++#include "stimpak_art.h"
  #include "svga.h"
  #include "text_font.h"
  #include "version.h"
@@ -25,7 +25,7 @@ index f5e5a13f..a6a33f52 100644
      MAIN_MENU_BUTTON_LOAD_GAME,
      MAIN_MENU_BUTTON_OPTIONS,
      MAIN_MENU_BUTTON_CREDITS,
-+    MAIN_MENU_BUTTON_STIMPACK,
++    MAIN_MENU_BUTTON_STIMPAK,
      MAIN_MENU_BUTTON_EXIT,
      MAIN_MENU_BUTTON_COUNT,
      MAIN_MENU_BUTTON_FIRST = MAIN_MENU_BUTTON_INTRO
@@ -33,8 +33,8 @@ index f5e5a13f..a6a33f52 100644
      { KEY_LOWERCASE_L, MainMenuOption::LoadGame, 11 },
      { KEY_LOWERCASE_O, MainMenuOption::Options, 12 },
      { KEY_LOWERCASE_C, MainMenuOption::Credits, 13 },
-+    // Label from stimpack.msg (labelMessage < 0).
-+    { KEY_LOWERCASE_S, MainMenuOption::Stimpack, -1 },
++    // Label from stimpak.msg (labelMessage < 0).
++    { KEY_LOWERCASE_S, MainMenuOption::Stimpak, -1 },
      { KEY_LOWERCASE_E, MainMenuOption::Exit, 14 },
  };
  
@@ -42,8 +42,8 @@ index f5e5a13f..a6a33f52 100644
  
  static bool mainMenuLoadArt()
  {
-+    // Stimpack: the seven-plate menu art is made from the game's own images.
-+    stimpackArtInit();
++    // Stimpak: the seven-plate menu art is made from the game's own images.
++    stimpakArtInit();
 +
      bool canUseHiresArt = screenGetWidth() != MAIN_MENU_LOGICAL_WIDTH || screenGetHeight() != MAIN_MENU_LOGICAL_HEIGHT;
      if (canUseHiresArt && mainMenuBackgroundFrmImage.lock(InterfaceFrmId("HR_MAINMENU.FRM"))) {
@@ -53,8 +53,8 @@ index f5e5a13f..a6a33f52 100644
          } else {
              // for highres main menu art, use separate panel art
 -            if (!mainMenuButtonPanelFrmImage.lock(InterfaceFrmId("HR_MENU_BG.FRM"))) {
-+            // Stimpack adds a seventh button: prefer the seven-plate panel.
-+            if (!mainMenuButtonPanelFrmImage.lock(InterfaceFrmId(kStimpackHiresMenuPanelArt))
++            // Stimpak adds a seventh button: prefer the seven-plate panel.
++            if (!mainMenuButtonPanelFrmImage.lock(InterfaceFrmId(kStimpakHiresMenuPanelArt))
 +                && !mainMenuButtonPanelFrmImage.lock(InterfaceFrmId("HR_MENU_BG.FRM"))) {
                  debugPrint("MAINMENU: failed to load hires HR_MENU_BG.FRM, falling back to vanilla mainmenu.frm\n");
                  mainMenuBackgroundFrmImage.unlock();
@@ -64,8 +64,8 @@ index f5e5a13f..a6a33f52 100644
  
      if (!mainMenuBackgroundFrmImage.isLocked()) {
 -        if (!mainMenuBackgroundFrmImage.lock(InterfaceFrameId::MainMenuBackgroundImage)) {
-+        // Stimpack adds a seventh button: prefer the seven-plate background.
-+        if (!mainMenuBackgroundFrmImage.lock(InterfaceFrmId(kStimpackMainMenuArt))
++        // Stimpak adds a seventh button: prefer the seven-plate background.
++        if (!mainMenuBackgroundFrmImage.lock(InterfaceFrmId(kStimpakMainMenuArt))
 +            && !mainMenuBackgroundFrmImage.lock(InterfaceFrameId::MainMenuBackgroundImage)) {
              debugPrint("MAINMENU: failed to load vanilla mainmenu.frm\n");
              return false;
@@ -76,7 +76,7 @@ index f5e5a13f..a6a33f52 100644
          msg.num = mainMenuButtonSpecs[index].labelMessage;
 -        if (!messageListGetItem(&gMiscMessageList, &msg)) {
 +        if (msg.num < 0) {
-+            msg.text = const_cast<char*>(stimpackGetMessage(STIMPACK_MSG_MENU_BUTTON, "STIMPACK"));
++            msg.text = const_cast<char*>(stimpakGetMessage(STIMPAK_MSG_MENU_BUTTON, "STIMPAK"));
 +        } else if (!messageListGetItem(&gMiscMessageList, &msg)) {
              continue;
          }

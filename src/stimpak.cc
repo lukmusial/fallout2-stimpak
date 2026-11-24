@@ -1,4 +1,4 @@
-#include "stimpack.h"
+#include "stimpak.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -37,7 +37,7 @@
 #include "proto.h"
 #include "proto_instance.h"
 #include "scripts.h"
-#include "stimpack_art.h"
+#include "stimpak_art.h"
 #include "svga.h"
 #include "text_font.h"
 #include "tile.h"
@@ -57,6 +57,7 @@ namespace {
         HUB_ENTRY_QUESTS,
         HUB_ENTRY_LOCATION,
         HUB_ENTRY_SAVE_AS,
+        HUB_ENTRY_PLAY,
         HUB_ENTRY_EXIT,
         HUB_ENTRY_COUNT,
     };
@@ -71,26 +72,27 @@ namespace {
     };
 
     constexpr HubEntrySpec kHubEntries[HUB_ENTRY_COUNT] = {
-        { STIMPACK_MSG_CHARACTER, "CHARACTER", KEY_LOWERCASE_C, true },
-        { STIMPACK_MSG_COMPANIONS, "COMPANIONS", KEY_LOWERCASE_O, true },
-        { STIMPACK_MSG_ROSTER, "ROSTER", KEY_LOWERCASE_R, true },
-        { STIMPACK_MSG_QUESTS, "QUESTS", KEY_LOWERCASE_Q, true },
-        { STIMPACK_MSG_LOCATION, "LOCATION", KEY_LOWERCASE_L, true },
-        { STIMPACK_MSG_SAVE_AS, "SAVE AS", KEY_LOWERCASE_S, true },
-        { STIMPACK_MSG_EXIT, "EXIT", KEY_LOWERCASE_E, true },
+        { STIMPAK_MSG_CHARACTER, "CHARACTER", KEY_LOWERCASE_C, true },
+        { STIMPAK_MSG_COMPANIONS, "COMPANIONS", KEY_LOWERCASE_O, true },
+        { STIMPAK_MSG_ROSTER, "ROSTER", KEY_LOWERCASE_R, true },
+        { STIMPAK_MSG_QUESTS, "QUESTS", KEY_LOWERCASE_Q, true },
+        { STIMPAK_MSG_LOCATION, "LOCATION", KEY_LOWERCASE_L, true },
+        { STIMPAK_MSG_SAVE_AS, "SAVE AS", KEY_LOWERCASE_S, true },
+        { STIMPAK_MSG_PLAY, "PLAY", KEY_LOWERCASE_P, true },
+        { STIMPAK_MSG_EXIT, "EXIT", KEY_LOWERCASE_E, true },
     };
 
-    // Panel art: opbase_sp.png (options panel with eight slots, made from
-    // opbase.frm by stimpack_art.cc). Slot 0 is the header, slots 1..7 the entries.
+    // Panel art: opbase_sp.png (options panel with nine slots, made from
+    // opbase.frm by stimpak_art.cc). Slot 0 is the header, slots 1..8 the entries.
     constexpr int kPanelFirstSlotY = 17;
     constexpr int kPanelSlotPitch = 37;
     constexpr int kPanelSlotX = 13;
     constexpr int kHeaderFont = 101;
     constexpr int kButtonFont = 103;
 
-    // English texts; text/<language>/game/stimpack.msg overrides them.
-    const std::pair<int, const char*> kStimpackDefaultMessages[] = {
-        { 100, "STIMPACK" },
+    // English texts; text/<language>/game/stimpak.msg overrides them.
+    const std::pair<int, const char*> kStimpakDefaultMessages[] = {
+        { 100, "STIMPAK" },
         { 101, "CHARACTER" },
         { 102, "COMPANIONS" },
         { 103, "ROSTER" },
@@ -98,6 +100,7 @@ namespace {
         { 105, "LOCATION" },
         { 106, "SAVE AS" },
         { 107, "EXIT" },
+        { 108, "PLAY" },
         { 110, "This game was saved during combat and cannot be edited." },
         { 111, "Leave without saving your changes?" },
         { 120, "PERKS" },
@@ -142,10 +145,10 @@ namespace {
         { 187, "The party could not travel there." },
     };
 
-    MessageList gStimpackMessageList;
-    bool gStimpackMessageListLoaded = false;
+    MessageList gStimpakMessageList;
+    bool gStimpakMessageListLoaded = false;
 
-    constexpr int kPanelMaxEntries = 7;
+    constexpr int kPanelMaxEntries = 8;
 
     // One plate of a panel: a button, or a dimmed plate when not enabled.
     struct PanelEntry {
@@ -216,11 +219,11 @@ namespace {
     {
         hub.oldFont = fontGetCurrent();
 
-        stimpackArtInit();
-        if (!hub.background.lock(InterfaceFrmId(kStimpackHubPanelArt))
+        stimpakArtInit();
+        if (!hub.background.lock(InterfaceFrmId(kStimpakHubPanelArt))
             || !hub.buttonUp.lock(InterfaceFrameId::OptionsButtonOff)
             || !hub.buttonDown.lock(InterfaceFrameId::OptionsButtonOn)) {
-            debugPrint("STIMPACK: missing panel art\n");
+            debugPrint("STIMPAK: missing panel art\n");
             return false;
         }
 
@@ -248,8 +251,8 @@ namespace {
         memcpy(hub.buffer + static_cast<size_t>(panelWidth) * (panelHeight - border),
             hub.background.getData() + static_cast<size_t>(panelWidth) * (artHeight - border),
             static_cast<size_t>(panelWidth) * border);
-        stimpackNotifyImageDrawn(hub.window, hub.background, 0, 0, panelWidth, panelHeight - border, 0, 0);
-        stimpackNotifyImageDrawn(hub.window, hub.background, 0, artHeight - border, panelWidth, border, 0, panelHeight - border);
+        stimpakNotifyImageDrawn(hub.window, hub.background, 0, 0, panelWidth, panelHeight - border, 0, 0);
+        stimpakNotifyImageDrawn(hub.window, hub.background, 0, artHeight - border, panelWidth, border, 0, panelHeight - border);
         hubDrawHeader(hub, header1, header2);
 
         fontSetCurrent(kButtonFont);
@@ -263,7 +266,7 @@ namespace {
                 // Not available yet: draw the plate with a dim label and no button.
                 blitBufferToBufferTrans(hub.buttonUp.getData(), buttonWidth, buttonHeight, buttonWidth,
                     hub.buffer + panelWidth * slotY + kPanelSlotX, panelWidth);
-                stimpackNotifyImageDrawn(hub.window, hub.buttonUp, 0, 0, hub.buttonUp.getWidth(), hub.buttonUp.getHeight(), kPanelSlotX, slotY);
+                stimpakNotifyImageDrawn(hub.window, hub.buttonUp, 0, 0, hub.buttonUp.getWidth(), hub.buttonUp.getHeight(), kPanelSlotX, slotY);
                 fontDrawText(hub.buffer + panelWidth * (slotY + textY) + kPanelSlotX + textX, label, buttonWidth, panelWidth, COLOR_DARK_GREY_2);
                 continue;
             }
@@ -296,7 +299,7 @@ namespace {
                 BUTTON_FLAG_TRANSPARENT);
             if (button != -1) {
                 buttonSetCallbacks(button, _gsound_lrg_butt_press, _gsound_lrg_butt_release);
-                stimpackNotifyButtonArt(button, &hub.buttonUp, &hub.buttonDown);
+                stimpakNotifyButtonArt(button, &hub.buttonUp, &hub.buttonDown);
             }
         }
 
@@ -327,13 +330,13 @@ namespace {
 
     void showMessage(int messageId, const char* fallback)
     {
-        const char* body[] = { stimpackGetMessage(messageId, fallback) };
+        const char* body[] = { stimpakGetMessage(messageId, fallback) };
         showDialogBox(nullptr, body, 1, 169, 116, COLOR_AMBER, nullptr, COLOR_AMBER, DIALOG_BOX_LARGE);
     }
 
     bool confirm(int messageId, const char* fallback)
     {
-        const char* body[] = { stimpackGetMessage(messageId, fallback) };
+        const char* body[] = { stimpakGetMessage(messageId, fallback) };
         return showDialogBox(nullptr, body, 1, 169, 116, COLOR_AMBER, nullptr, COLOR_AMBER, DIALOG_BOX_LARGE | DIALOG_BOX_YES_NO) != 0;
     }
 
@@ -434,7 +437,7 @@ namespace {
             || !plusOn.lock(InterfaceFrameId::CharacterEditorSpecialPositiveOn)
             || !minusOff.lock(InterfaceFrameId::CharacterEditorSpecialNegativeOff)
             || !minusOn.lock(InterfaceFrameId::CharacterEditorSpecialNegativeOn)) {
-            debugPrint("STIMPACK: missing list screen art\n");
+            debugPrint("STIMPAK: missing list screen art\n");
             return false;
         }
 
@@ -445,14 +448,14 @@ namespace {
         }
         unsigned char* buffer = windowGetBuffer(window);
         memcpy(buffer, background.getData(), kListWidth * kListHeight);
-        stimpackNotifyImageDrawn(window, background, 0, 0, background.getWidth(), background.getHeight(), 0, 0);
+        stimpakNotifyImageDrawn(window, background, 0, 0, background.getWidth(), background.getHeight(), 0, 0);
 
         auto button = [&](int x, int y, FrmImage& up, FrmImage& down, int code) {
             int btn = buttonCreate(window, x, y, up.getWidth(), up.getHeight(), -1, -1, -1, code,
                 up.getData(), down.getData(), nullptr, BUTTON_FLAG_TRANSPARENT);
             if (btn != -1) {
                 buttonSetCallbacks(btn, _gsound_red_butt_press, nullptr);
-                stimpackNotifyButtonArt(btn, &up, &down);
+                stimpakNotifyButtonArt(btn, &up, &down);
             }
         };
         button(48, 186, redUp, redDown, CODE_DONE);
@@ -466,7 +469,7 @@ namespace {
 
         fontSetCurrent(103);
         fontDrawText(buffer + kListWidth * 16 + 49, screen.title, kListWidth, kListWidth, COLOR_DARK_YELLOW);
-        fontDrawText(buffer + kListWidth * 186 + 69, stimpackGetMessage(STIMPACK_MSG_DONE, "DONE"), kListWidth, kListWidth, COLOR_DARK_YELLOW);
+        fontDrawText(buffer + kListWidth * 186 + 69, stimpakGetMessage(STIMPAK_MSG_DONE, "DONE"), kListWidth, kListWidth, COLOR_DARK_YELLOW);
         fontDrawText(buffer + kListWidth * 186 + 177, screen.valueLabel, kListWidth, kListWidth, COLOR_DARK_YELLOW);
 
         // Optional action: a red button with its label at the foot of the card.
@@ -513,7 +516,7 @@ namespace {
             fontSetCurrent(101);
             blitBufferToBuffer(background.getData() + kListWidth * kListY + kListX, kListRowsWidth, kListRowsHeight, kListWidth,
                 buffer + kListWidth * kListY + kListX, kListWidth);
-            stimpackNotifyImageDrawn(window, background, kListX, kListY, kListRowsWidth, kListRowsHeight, kListX, kListY);
+            stimpakNotifyImageDrawn(window, background, kListX, kListY, kListRowsWidth, kListRowsHeight, kListX, kListY);
             int y = kListY;
             for (int row = top; row < std::min(static_cast<int>(rows.size()), top + kListVisibleRows); row++) {
                 Color color = rows[row].header ? COLOR_DARK_YELLOW : (row == selected ? COLOR_LIGHT_YELLOW : COLOR_GREEN);
@@ -529,7 +532,7 @@ namespace {
 
             // Card: parchment comes back from the background, then title and text.
             blitBufferToBuffer(background.getData() + kCardX, kListWidth - kCardX, kListHeight, kListWidth, buffer + kCardX, kListWidth);
-            stimpackNotifyImageDrawn(window, background, kCardX, 0, kListWidth - kCardX, kListHeight, kCardX, 0);
+            stimpakNotifyImageDrawn(window, background, kCardX, 0, kListWidth - kCardX, kListHeight, kCardX, 0);
             std::string title;
             std::string text;
             if (selectable(selected)) {
@@ -752,19 +755,19 @@ namespace {
         });
 
         ListScreen screen;
-        screen.title = stimpackGetMessage(STIMPACK_MSG_ROSTER, "ROSTER");
-        screen.valueLabel = stimpackGetMessage(STIMPACK_MSG_ROSTER_VALUE, "JOIN");
+        screen.title = stimpakGetMessage(STIMPAK_MSG_ROSTER, "ROSTER");
+        screen.valueLabel = stimpakGetMessage(STIMPAK_MSG_ROSTER_VALUE, "JOIN");
         screen.actionLabel = nullptr;
         screen.rows = [&]() {
             std::vector<ListRow> rows;
             for (const ProtoId& pid : pids) {
-                rows.push_back({ protoGetName(pid), partyObjectForPid(pid) != nullptr ? stimpackGetMessage(STIMPACK_MSG_IN_PARTY, "IN PARTY") : "", false });
+                rows.push_back({ protoGetName(pid), partyObjectForPid(pid) != nullptr ? stimpakGetMessage(STIMPAK_MSG_IN_PARTY, "IN PARTY") : "", false });
             }
             return rows;
         };
         screen.card = [&](int row, std::string* title, std::string* text) {
             *title = protoGetName(pids[row]);
-            *text = stimpackGetMessage(partyObjectForPid(pids[row]) != nullptr ? STIMPACK_MSG_ROSTER_CARD_MEMBER : STIMPACK_MSG_ROSTER_CARD_OTHER, "");
+            *text = stimpakGetMessage(partyObjectForPid(pids[row]) != nullptr ? STIMPAK_MSG_ROSTER_CARD_MEMBER : STIMPAK_MSG_ROSTER_CARD_OTHER, "");
         };
         screen.change = [&](int row, int delta) {
             Object* member = partyObjectForPid(pids[row]);
@@ -806,18 +809,18 @@ namespace {
                     location = quest.location;
                     entries.push_back({ -1, { location, "", true } });
                 }
-                static const int kStateMessages[] = { STIMPACK_MSG_QUEST_NOT_STARTED, STIMPACK_MSG_QUEST_ACTIVE, STIMPACK_MSG_QUEST_DONE };
+                static const int kStateMessages[] = { STIMPAK_MSG_QUEST_NOT_STARTED, STIMPAK_MSG_QUEST_ACTIVE, STIMPAK_MSG_QUEST_DONE };
                 static const char* kStateFallbacks[] = { "-", "ACTIVE", "DONE" };
                 int state = questState(quest);
-                entries.push_back({ index, { quest.text, stimpackGetMessage(kStateMessages[state], kStateFallbacks[state]), false } });
+                entries.push_back({ index, { quest.text, stimpakGetMessage(kStateMessages[state], kStateFallbacks[state]), false } });
             }
             return entries;
         };
         std::vector<Entry> entries = build();
 
         ListScreen screen;
-        screen.title = stimpackGetMessage(STIMPACK_MSG_QUESTS, "QUESTS");
-        screen.valueLabel = stimpackGetMessage(STIMPACK_MSG_QUEST_VALUE, "STATE");
+        screen.title = stimpakGetMessage(STIMPAK_MSG_QUESTS, "QUESTS");
+        screen.valueLabel = stimpakGetMessage(STIMPAK_MSG_QUEST_VALUE, "STATE");
         screen.actionLabel = nullptr;
         screen.rows = [&]() {
             entries = build();
@@ -831,7 +834,7 @@ namespace {
             QuestInfo quest;
             questGetInfo(entries[row].quest, &quest);
             *title = quest.location;
-            *text = std::string(quest.text) + "\n\n" + stimpackGetMessage(STIMPACK_MSG_QUEST_CARD, "");
+            *text = std::string(quest.text) + "\n\n" + stimpakGetMessage(STIMPAK_MSG_QUEST_CARD, "");
         };
         screen.change = [&](int row, int delta) {
             QuestInfo quest;
@@ -855,11 +858,11 @@ namespace {
     bool runLocation(bool* travelled)
     {
         std::vector<City> areas;
-        for (int index = 0; index < wmStimpackGetAreaCount(); index++) {
+        for (int index = 0; index < wmStimpakGetAreaCount(); index++) {
             City area = static_cast<City>(index);
             char name[48];
             wmGetAreaIdxName(area, name);
-            if (wmStimpackAreaHasEntrance(area) && name[0] != '\0' && strcmp(name, "Error") != 0) {
+            if (wmStimpakAreaHasEntrance(area) && name[0] != '\0' && strcmp(name, "Error") != 0) {
                 areas.push_back(area);
             }
         }
@@ -870,44 +873,44 @@ namespace {
         };
 
         ListScreen screen;
-        screen.title = stimpackGetMessage(STIMPACK_MSG_LOCATION, "LOCATION");
-        screen.valueLabel = stimpackGetMessage(STIMPACK_MSG_LOCATION_VALUE, "STATE");
-        screen.actionLabel = stimpackGetMessage(STIMPACK_MSG_TRAVEL, "TRAVEL");
+        screen.title = stimpakGetMessage(STIMPAK_MSG_LOCATION, "LOCATION");
+        screen.valueLabel = stimpakGetMessage(STIMPAK_MSG_LOCATION_VALUE, "STATE");
+        screen.actionLabel = stimpakGetMessage(STIMPAK_MSG_TRAVEL, "TRAVEL");
         screen.rows = [&]() {
-            static const int kStateMessages[] = { STIMPACK_MSG_AREA_UNKNOWN, STIMPACK_MSG_AREA_KNOWN, STIMPACK_MSG_AREA_VISITED };
+            static const int kStateMessages[] = { STIMPAK_MSG_AREA_UNKNOWN, STIMPAK_MSG_AREA_KNOWN, STIMPAK_MSG_AREA_VISITED };
             static const char* kStateFallbacks[] = { "-", "KNOWN", "VISITED" };
             City current = CITY_INVALID;
             wmGetPartyCurArea(&current);
             std::vector<ListRow> rows;
             for (City area : areas) {
-                int state = wmStimpackGetAreaState(area);
+                int state = wmStimpakGetAreaState(area);
                 std::string name = areaName(area);
                 if (area == current) {
                     name = "> " + name;
                 }
-                rows.push_back({ name, stimpackGetMessage(kStateMessages[state], kStateFallbacks[state]), false });
+                rows.push_back({ name, stimpakGetMessage(kStateMessages[state], kStateFallbacks[state]), false });
             }
             return rows;
         };
         screen.card = [&](int row, std::string* title, std::string* text) {
             *title = areaName(areas[row]);
-            *text = stimpackGetMessage(STIMPACK_MSG_LOCATION_CARD, "");
+            *text = stimpakGetMessage(STIMPAK_MSG_LOCATION_CARD, "");
         };
         screen.change = [&](int row, int delta) {
-            int state = wmStimpackGetAreaState(areas[row]) + delta;
+            int state = wmStimpakGetAreaState(areas[row]) + delta;
             if (state < 0 || state > 2) {
                 return false;
             }
-            wmStimpackSetAreaState(areas[row], state);
+            wmStimpakSetAreaState(areas[row], state);
             return true;
         };
         screen.action = [&](int row) {
-            if (!confirm(STIMPACK_MSG_TRAVEL_CONFIRM, "Move the party to this town now?")) {
+            if (!confirm(STIMPAK_MSG_TRAVEL_CONFIRM, "Move the party to this town now?")) {
                 return false;
             }
             // The map change runs the new map's scripts; stop them again after.
-            if (wmStimpackTravelToArea(areas[row]) != 0) {
-                showMessage(STIMPACK_MSG_TRAVEL_FAILED, "The party could not travel there.");
+            if (wmStimpakTravelToArea(areas[row]) != 0) {
+                showMessage(STIMPAK_MSG_TRAVEL_FAILED, "The party could not travel there.");
                 return false;
             }
             scriptsDisable();
@@ -920,7 +923,7 @@ namespace {
     constexpr int kPickerEventBase = 640;
 
     // Companions in the party (alive, on the map), at most six so BACK fits.
-    std::vector<Object*> stimpackCompanions()
+    std::vector<Object*> stimpakCompanions()
     {
         std::vector<Object*> companions;
         for (Object* member : get_all_party_members_objects(false)) {
@@ -935,9 +938,9 @@ namespace {
     // Returns true when anything was changed.
     bool runCompanions()
     {
-        std::vector<Object*> companions = stimpackCompanions();
+        std::vector<Object*> companions = stimpakCompanions();
         if (companions.empty()) {
-            showMessage(STIMPACK_MSG_NO_COMPANIONS, "There are no companions in this game.");
+            showMessage(STIMPAK_MSG_NO_COMPANIONS, "There are no companions in this game.");
             return false;
         }
 
@@ -947,11 +950,11 @@ namespace {
             for (Object* companion : companions) {
                 entries.push_back({ critterGetName(companion), true });
             }
-            entries.push_back({ stimpackGetMessage(STIMPACK_MSG_BACK, "BACK"), true });
+            entries.push_back({ stimpakGetMessage(STIMPAK_MSG_BACK, "BACK"), true });
             int backIndex = static_cast<int>(entries.size()) - 1;
 
             Hub picker;
-            if (!hubInit(picker, stimpackGetMessage(STIMPACK_MSG_COMPANIONS, "COMPANIONS"), critterGetName(gDude), entries, kPickerEventBase)) {
+            if (!hubInit(picker, stimpakGetMessage(STIMPAK_MSG_COMPANIONS, "COMPANIONS"), critterGetName(gDude), entries, kPickerEventBase)) {
                 hubFree(picker);
                 return edited;
             }
@@ -976,7 +979,7 @@ namespace {
             if (chosen == backIndex) {
                 return edited;
             }
-            if (characterEditorShowStimpackCompanion(companions[chosen]) == 0) {
+            if (characterEditorShowStimpakCompanion(companions[chosen]) == 0) {
                 edited = true;
             }
             windowRefreshAll(&_scr_size);
@@ -985,42 +988,42 @@ namespace {
 
 } // namespace
 
-static StimpackRenderHooks gStimpackRenderHooks;
+static StimpakRenderHooks gStimpakRenderHooks;
 
-void stimpackSetRenderHooks(const StimpackRenderHooks& hooks)
+void stimpakSetRenderHooks(const StimpakRenderHooks& hooks)
 {
-    gStimpackRenderHooks = hooks;
+    gStimpakRenderHooks = hooks;
 }
 
-void stimpackNotifyImageDrawn(int window, const FrmImage& image, int srcX, int srcY, int width, int height, int destX, int destY)
+void stimpakNotifyImageDrawn(int window, const FrmImage& image, int srcX, int srcY, int width, int height, int destX, int destY)
 {
-    if (gStimpackRenderHooks.imageDrawn != nullptr) {
-        gStimpackRenderHooks.imageDrawn(window, image, srcX, srcY, width, height, destX, destY);
+    if (gStimpakRenderHooks.imageDrawn != nullptr) {
+        gStimpakRenderHooks.imageDrawn(window, image, srcX, srcY, width, height, destX, destY);
     }
 }
 
-void stimpackNotifyButtonArt(int button, const FrmImage* normal, const FrmImage* pressed)
+void stimpakNotifyButtonArt(int button, const FrmImage* normal, const FrmImage* pressed)
 {
-    if (gStimpackRenderHooks.buttonArt != nullptr) {
-        gStimpackRenderHooks.buttonArt(button, normal, pressed);
+    if (gStimpakRenderHooks.buttonArt != nullptr) {
+        gStimpakRenderHooks.buttonArt(button, normal, pressed);
     }
 }
 
-const char* stimpackGetMessage(int messageId, const char* fallback)
+const char* stimpakGetMessage(int messageId, const char* fallback)
 {
-    if (!gStimpackMessageListLoaded) {
-        gStimpackMessageListLoaded = true;
-        messageListInit(&gStimpackMessageList);
-        messageListLoad(&gStimpackMessageList, "game\\stimpack.msg");
+    if (!gStimpakMessageListLoaded) {
+        gStimpakMessageListLoaded = true;
+        messageListInit(&gStimpakMessageList);
+        messageListLoad(&gStimpakMessageList, "game\\stimpak.msg");
     }
 
     MessageListItem item;
     item.num = messageId;
-    if (messageListGetItem(&gStimpackMessageList, &item)) {
+    if (messageListGetItem(&gStimpakMessageList, &item)) {
         return item.text;
     }
 
-    for (const auto& [id, text] : kStimpackDefaultMessages) {
+    for (const auto& [id, text] : kStimpakDefaultMessages) {
         if (id == messageId) {
             return text;
         }
@@ -1029,19 +1032,19 @@ const char* stimpackGetMessage(int messageId, const char* fallback)
     return fallback;
 }
 
-#ifndef STIMPACK_VERSION
-#define STIMPACK_VERSION "development"
+#ifndef STIMPAK_VERSION
+#define STIMPAK_VERSION "development"
 #endif
 
-bool stimpackRun()
+StimpakResult stimpakRun()
 {
-    debugPrint("STIMPACK %s: editor opened\n", STIMPACK_VERSION);
+    debugPrint("STIMPAK %s: editor opened\n", STIMPAK_VERSION);
 
     // A game saved mid-combat restores a half-finished combat state on load;
     // saving it again without running combat would persist that state.
     if (isInCombat()) {
-        showMessage(STIMPACK_MSG_COMBAT_SAVE, "This game was saved during combat and cannot be edited.");
-        return false;
+        showMessage(STIMPAK_MSG_COMBAT_SAVE, "This game was saved during combat and cannot be edited.");
+        return StimpakResult::Exit;
     }
 
     // The game loop never runs while editing: keep scripts from reacting.
@@ -1050,18 +1053,19 @@ bool stimpackRun()
 
     std::vector<PanelEntry> entries;
     for (const HubEntrySpec& spec : kHubEntries) {
-        entries.push_back({ stimpackGetMessage(spec.messageId, spec.fallback), spec.implemented });
+        entries.push_back({ stimpakGetMessage(spec.messageId, spec.fallback), spec.implemented });
     }
 
     Hub hub;
     if (!hubInit(hub, critterGetName(gDude), mapGetCityName(mapGetCurrentMap()), entries, kHubEventBase)) {
         hubFree(hub);
-        return false;
+        return StimpakResult::Exit;
     }
 
-    devAutomationSetState("stimpack");
+    devAutomationSetState("stimpak");
 
     bool saved = false;
+    bool play = false;
     bool edited = false;
     bool done = false;
     while (!done) {
@@ -1072,7 +1076,7 @@ bool stimpackRun()
         case HUB_ENTRY_CHARACTER:
             // Sub-screens open above the hub; hide it so it does not show around them.
             windowHide(hub.window);
-            if (characterEditorShowStimpack() == 0) {
+            if (characterEditorShowStimpak() == 0) {
                 edited = true;
             }
             windowShow(hub.window);
@@ -1126,8 +1130,13 @@ bool stimpackRun()
                 windowRefreshAll(&_scr_size);
             }
             break;
+        case HUB_ENTRY_PLAY:
+            // Straight into the game with the edits, saved or not.
+            play = true;
+            done = true;
+            break;
         case HUB_ENTRY_EXIT:
-            if (!edited || confirm(STIMPACK_MSG_DISCARD_CHANGES, "Leave without saving your changes?")) {
+            if (!edited || confirm(STIMPAK_MSG_DISCARD_CHANGES, "Leave without saving your changes?")) {
                 done = true;
             }
             windowRefreshAll(&_scr_size);
@@ -1142,7 +1151,16 @@ bool stimpackRun()
 
     devAutomationSetState("");
     hubFree(hub);
-    return saved;
+
+    if (play) {
+        // Undo the hub's shading of the map: animations, colours, the bar.
+        isoEnable();
+        interfaceBarShow();
+        tileWindowRefresh();
+        return StimpakResult::Play;
+    }
+
+    return saved ? StimpakResult::Saved : StimpakResult::Exit;
 }
 
 } // namespace fallout

@@ -1,4 +1,4 @@
-Stimpack patch for src/win32.cc (engine commit c30f1efce64b).
+Stimpak patch for src/win32.cc (engine commit c30f1efce64b).
 
 diff --git a/src/win32.cc b/src/win32.cc
 index 36f04545..956f0e58 100644

@@ -1,14 +1,14 @@
-Stimpack patch for src/pipboy.h (engine commit c30f1efce64b).
+Stimpak patch for src/pipboy.h (engine commit c30f1efce64b).
 
 diff --git a/src/pipboy.h b/src/pipboy.h
-index 2dca5b43..ee1c874e 100644
+index 2dca5b43..77445257 100644
 --- a/src/pipboy.h
 +++ b/src/pipboy.h
 @@ -47,6 +47,19 @@ extern MessageList gPipboyMessageList;
  int pipboyMessageListInit();
  void pipboyMessageListFree();
  
-+// Stimpack: read-only view of the quest table (data/quests.txt), sorted by
++// Stimpak: read-only view of the quest table (data/quests.txt), sorted by
 +// location. Text and location name come from quests.msg / map.msg.
 +struct QuestInfo {
 +    const char* location;

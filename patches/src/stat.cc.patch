@@ -1,4 +1,4 @@
-Stimpack patch for src/stat.cc (engine commit c30f1efce64b).
+Stimpak patch for src/stat.cc (engine commit c30f1efce64b).
 
 diff --git a/src/stat.cc b/src/stat.cc
 index 907c3b61..29f8c579 100644

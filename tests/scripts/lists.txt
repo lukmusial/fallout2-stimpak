@@ -1,4 +1,4 @@
-# Stimpack on slot 1: Sulik joins (roster), the first quest becomes ACTIVE,
+# Stimpak on slot 1: Sulik joins (roster), the first quest becomes ACTIVE,
 # Klamath becomes VISITED and the party travels there; saved to the first
 # empty slot.
 until mainmenu 20000
@@ -7,7 +7,7 @@ key s
 wait 1200
 key home
 key enter
-until stimpack 30000
+until stimpak 30000
 wait 500
 key r
 wait 800
@@ -36,14 +36,14 @@ click 460 316
 wait 800
 shot travel_confirm
 key enter
-until stimpack 30000
+until stimpak 30000
 wait 1500
 shot hub_after_travel
 key s
 wait 1200
 key enter
 until input 10000
-text stimpack lists
+text stimpak lists
 key enter
 until mainmenu 30000
 quit 0

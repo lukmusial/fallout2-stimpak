@@ -1,4 +1,4 @@
-Stimpack patch for src/palette.cc (engine commit c30f1efce64b).
+Stimpak patch for src/palette.cc (engine commit c30f1efce64b).
 
 diff --git a/src/palette.cc b/src/palette.cc
 index 0e40859e..d70af50c 100644

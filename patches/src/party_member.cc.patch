@@ -1,4 +1,4 @@
-Stimpack patch for src/party_member.cc (engine commit c30f1efce64b).
+Stimpak patch for src/party_member.cc (engine commit c30f1efce64b).
 
 diff --git a/src/party_member.cc b/src/party_member.cc
 index 3791fb5b..87c889a0 100644

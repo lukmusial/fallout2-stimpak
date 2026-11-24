@@ -1,4 +1,4 @@
-# Stimpack on slot 1: ST +3, Small Guns +10 points, one perk rank, level 12,
+# Stimpak on slot 1: ST +3, Small Guns +10 points, one perk rank, level 12,
 # 5000 caps; saved to the first empty slot.
 until mainmenu 20000
 wait 300
@@ -6,7 +6,7 @@ key s
 wait 1200
 key home
 key enter
-until stimpack 30000
+until stimpak 30000
 wait 500
 key c
 wait 1500
@@ -59,7 +59,7 @@ key s
 wait 1200
 key enter
 until input 10000
-text stimpack player
+text stimpak player
 key enter
 until mainmenu 30000
 quit 0

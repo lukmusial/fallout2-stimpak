@@ -1,4 +1,4 @@
-Stimpack patch for src/art.cc (engine commit c30f1efce64b).
+Stimpak patch for src/art.cc (engine commit c30f1efce64b).
 
 diff --git a/src/art.cc b/src/art.cc
 index 017a14cb..b24d9ff9 100644

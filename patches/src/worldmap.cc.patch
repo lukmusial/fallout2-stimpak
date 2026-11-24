@@ -1,24 +1,24 @@
-Stimpack patch for src/worldmap.cc (engine commit c30f1efce64b).
+Stimpak patch for src/worldmap.cc (engine commit c30f1efce64b).
 
 diff --git a/src/worldmap.cc b/src/worldmap.cc
-index 2fa8eac8..2fcdd488 100644
+index 2fa8eac8..646a8ac7 100644
 --- a/src/worldmap.cc
 +++ b/src/worldmap.cc
 @@ -7461,6 +7461,80 @@ int wmMapMusicStart()
      return -1;
  }
  
-+int wmStimpackGetAreaCount()
++int wmStimpakGetAreaCount()
 +{
 +    return wmMaxAreaNum;
 +}
 +
-+bool wmStimpackAreaHasEntrance(City areaIdx)
++bool wmStimpakAreaHasEntrance(City areaIdx)
 +{
 +    return cityIsValid(areaIdx) && wmAreaInfoList[areaIdx].entrancesLength > 0;
 +}
 +
-+int wmStimpackGetAreaState(City areaIdx)
++int wmStimpakGetAreaState(City areaIdx)
 +{
 +    switch (wmAreaVisitedState(areaIdx)) {
 +    case VisitedState::Visited:
@@ -31,7 +31,7 @@ index 2fa8eac8..2fcdd488 100644
 +    }
 +}
 +
-+void wmStimpackSetAreaState(City areaIdx, int state)
++void wmStimpakSetAreaState(City areaIdx, int state)
 +{
 +    if (!cityIsValid(areaIdx)) {
 +        return;
@@ -51,13 +51,13 @@ index 2fa8eac8..2fcdd488 100644
 +    }
 +}
 +
-+int wmStimpackTravelToArea(City areaIdx)
++int wmStimpakTravelToArea(City areaIdx)
 +{
-+    if (!wmStimpackAreaHasEntrance(areaIdx)) {
++    if (!wmStimpakAreaHasEntrance(areaIdx)) {
 +        return -1;
 +    }
 +
-+    wmStimpackSetAreaState(areaIdx, 2);
++    wmStimpakSetAreaState(areaIdx, 2);
 +
 +    City previousArea = wmGenData.currentAreaId;
 +    wmGenData.currentAreaId = areaIdx;

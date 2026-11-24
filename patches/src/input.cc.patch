@@ -1,4 +1,4 @@
-Stimpack patch for src/input.cc (engine commit c30f1efce64b).
+Stimpak patch for src/input.cc (engine commit c30f1efce64b).
 
 diff --git a/src/input.cc b/src/input.cc
 index baaf5395..70822947 100644

@@ -1,4 +1,4 @@
-Stimpack patch for src/loadsave.cc (engine commit c30f1efce64b).
+Stimpak patch for src/loadsave.cc (engine commit c30f1efce64b).
 
 diff --git a/src/loadsave.cc b/src/loadsave.cc
 index 044a0446..e3ee3d30 100644

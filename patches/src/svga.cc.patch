@@ -1,4 +1,4 @@
-Stimpack patch for src/svga.cc (engine commit c30f1efce64b).
+Stimpak patch for src/svga.cc (engine commit c30f1efce64b).
 
 diff --git a/src/svga.cc b/src/svga.cc
 index 83350b97..677d112e 100644

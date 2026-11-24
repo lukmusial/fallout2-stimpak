@@ -1,4 +1,4 @@
-#include "stimpack_art.h"
+#include "stimpak_art.h"
 
 #include <string.h>
 
@@ -8,7 +8,7 @@
 
 namespace fallout {
 
-// Stimpack's menu art is made at run time from the game's own images, so no
+// Stimpak's menu art is made at run time from the game's own images, so no
 // game art is shipped with the mod. Pixel indices are copied, never
 // re-quantised, so the results use the game palette exactly.
 
@@ -31,11 +31,11 @@ namespace {
     constexpr int kHiresGap = 5;
 
     // opbase.frm (164x217, options panel): five 34-row slots on a 37-row pitch
-    // starting at y=17. The Stimpack hub needs eight (a header and seven buttons).
+    // starting at y=17. The Stimpak hub needs nine (a header and eight buttons).
     constexpr int kOpbaseFirstSlot = 17;
     constexpr int kOpbasePitch = 37;
     constexpr int kOpbaseSlots = 5;
-    constexpr int kHubSlots = 8;
+    constexpr int kHubSlots = 9;
 
     bool copyImage(const FrmImage& image, int* width, int* height, std::vector<unsigned char>* pixels)
     {
@@ -116,7 +116,7 @@ namespace {
 
 } // namespace
 
-void stimpackArtInit()
+void stimpakArtInit()
 {
     static bool registered = false;
     if (registered) {
@@ -124,9 +124,9 @@ void stimpackArtInit()
     }
     registered = true;
 
-    artRegisterGenerator(kStimpackMainMenuArt, makeMainMenu);
-    artRegisterGenerator(kStimpackHiresMenuPanelArt, makeHiresMenuPanel);
-    artRegisterGenerator(kStimpackHubPanelArt, makeHubPanel);
+    artRegisterGenerator(kStimpakMainMenuArt, makeMainMenu);
+    artRegisterGenerator(kStimpakHiresMenuPanelArt, makeHiresMenuPanel);
+    artRegisterGenerator(kStimpakHubPanelArt, makeHubPanel);
 }
 
 } // namespace fallout

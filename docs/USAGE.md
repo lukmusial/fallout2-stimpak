@@ -1,12 +1,12 @@
-# Using Stimpack
+# Using Stimpak
 
 ## Opening a saved game
 
-Choose **STIMPACK** in the main menu (hotkey **S**). The game's load screen opens:
+Choose **STIMPAK** in the main menu (hotkey **S**). The game's load screen opens:
 pick a saved game as you would to play it. The game is loaded, but nothing moves:
 game time is stopped and no scripts run while you edit.
 
-A game saved during combat cannot be edited (Stimpack says so and returns to the
+A game saved during combat cannot be edited (Stimpak says so and returns to the
 main menu): saving it again without finishing the fight would keep a
 half-restored combat in the save.
 
@@ -22,12 +22,15 @@ The hub lists the editor's screens. Click one or press its hotkey:
 | QUESTS | Q | quest states |
 | LOCATION | L | towns on the world map, travel |
 | SAVE AS | S | save the edited game |
+| PLAY | P | play the edited game now, without saving first |
 | EXIT | E / Esc | back to the main menu |
 
-Edits are kept in the loaded game until you save. **SAVE AS** opens the game's
-save screen on the first empty slot; choose any slot, type a description and
-press DONE. You can keep editing and save again. **EXIT** after unsaved changes
-asks *Leave without saving your changes?*
+Edits live in the loaded game. **PLAY** closes the editor and starts the game
+loop on the edited game, exactly as if it had just been loaded: nothing is
+saved until you save in the game. **SAVE AS** opens the game's save screen on
+the first empty slot; choose any slot, type a description and press DONE, and
+Stimpak returns to the main menu. **EXIT** after unsaved changes asks *Leave
+without saving your changes?*
 
 ## Character
 

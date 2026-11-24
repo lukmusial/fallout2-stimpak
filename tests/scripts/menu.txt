@@ -1,4 +1,4 @@
-# Main menu with the Stimpack button.
+# Main menu with the Stimpak button.
 until mainmenu 20000
 wait 1000
 shot menu

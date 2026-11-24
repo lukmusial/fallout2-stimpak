@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stimpack's automated tests.
+"""Stimpak's automated tests.
 
 The tests drive a real build of the game through its scripted test mode
 (`--dev-script`, see src/dev_automation.h): the game runs hidden and silent,
@@ -17,7 +17,7 @@ The game folder is only read; the tests run in <build>/test-run.
 
   tests/run_tests.py --game-dir "~/Games/Fallout 2" [--build-dir build/debug] [-k name] [--list]
 
-Environment: FALLOUT2_GAME_DIR (instead of --game-dir), STIMPACK_BUILD_DIR.
+Environment: FALLOUT2_GAME_DIR (instead of --game-dir), STIMPAK_BUILD_DIR.
 Screenshots of every run are kept in <build>/test-run/devout/<test>/ for review.
 """
 
@@ -198,14 +198,14 @@ def test_new_game(runner):
 
 
 def test_menu(runner):
-    """The main menu with the Stimpack button (a screenshot for review)."""
+    """The main menu with the Stimpak button (a screenshot for review)."""
     out = runner.run("menu", "menu.txt")
     expect((out / "menu.png").is_file(), "no screenshot")
     return "devout/menu/menu.png"
 
 
 def test_save_unchanged(runner):
-    """Open slot 1 in Stimpack and save it unchanged: the new save equals slot 1."""
+    """Open slot 1 in Stimpak and save it unchanged: the new save equals slot 1."""
     runner.clear_slots_after(1)
     runner.run("save_unchanged", "save_unchanged.txt")
     expect(runner.slot_dir(2).is_dir(), "Save As did not write slot 2")
@@ -296,6 +296,19 @@ def test_edit_companion(runner):
     return f"{member['name']}: level {before_member['level']} -> {member['level']}, HP 70/90"
 
 
+def test_play(runner):
+    """PLAY: the edited game runs at once (here with 5000 caps); nothing is saved."""
+    runner.clear_slots_after(1)
+    out = runner.run("play", "play.txt")
+    state = json.loads((out / "state.json").read_text())
+    expect(state["player"]["caps"] == 5000, f"caps {state['player']['caps']} in the running game")
+    expect(state["world"]["map_name"] == runner.start["world"]["map_name"], f"in {state['world']['map_name']}")
+    expect(not runner.slot_dir(2).exists(), "PLAY saved a game")
+    unchanged = runner.state_of_slot(1, "play_slot1_state")
+    expect(unchanged["player"]["caps"] == runner.start["player"]["caps"], "slot 1 changed")
+    return "game runs with the edit, no save made"
+
+
 def test_perk_scan(runner):
     """Every perk's card can be shown in the perk editor."""
     runner.run("perk_scan", "perk_scan.txt")
@@ -322,6 +335,7 @@ TESTS = [
     test_edit_player,
     test_lists,
     test_edit_companion,
+    test_play,
     test_perk_scan,
     test_game_screens,
     test_creation_screen,
@@ -331,7 +345,7 @@ TESTS = [
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--game-dir", default=os.environ.get("FALLOUT2_GAME_DIR"))
-    parser.add_argument("--build-dir", default=os.environ.get("STIMPACK_BUILD_DIR", str(ROOT / "build" / "debug")))
+    parser.add_argument("--build-dir", default=os.environ.get("STIMPAK_BUILD_DIR", str(ROOT / "build" / "debug")))
     parser.add_argument("-k", dest="filter", help="run only tests whose name contains this (plus what they need)")
     parser.add_argument("--list", action="store_true")
     args = parser.parse_args()

@@ -1,4 +1,4 @@
-# Building and testing Stimpack
+# Building and testing Stimpak
 
 ## Requirements
 
@@ -11,8 +11,8 @@
 ## Building
 
 ```sh
-git clone --recurse-submodules <this repository> stimpack
-cd stimpack
+git clone --recurse-submodules <this repository> stimpak
+cd stimpak
 tools/build.sh Release            # build/release
 tools/build.sh Debug              # build/debug
 tools/package.sh                  # release archive for this system, in dist/
@@ -24,7 +24,7 @@ On Windows, run the scripts from Git Bash.
 
 ```sh
 cmake -S engine -B build/release -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_PROJECT_fallout2-ce_INCLUDE=$PWD/cmake/StimpackProjectInclude.cmake
+      -DCMAKE_PROJECT_fallout2-ce_INCLUDE=$PWD/cmake/StimpakProjectInclude.cmake
 cmake --build build/release --target fallout2-ce
 ```
 
@@ -35,22 +35,22 @@ The repository has three parts:
 | Path | |
 | --- | --- |
 | `engine/` | Fallout 2 Community Edition as a git submodule, at the commit in `engine-version.txt`. Never modified. |
-| `src/` | Stimpack's own sources (the editor, its menu art, the test harness). |
-| `patches/src/<file>.patch` | One patch per engine file Stimpack changes: small hooks (the menu button, the editor mode of the character screen, accessors for quests, towns and companions, the test harness hooks). |
+| `src/` | Stimpak's own sources (the editor, its menu art, the test harness). |
+| `patches/src/<file>.patch` | One patch per engine file Stimpak changes: small hooks (the menu button, the editor mode of the character screen, accessors for quests, towns and companions, the test harness hooks). |
 
-`cmake/Stimpack.cmake` (`stimpack_attach(<target>)`) runs `tools/stimpack_tree.py`
+`cmake/Stimpak.cmake` (`stimpak_attach(<target>)`) runs `tools/stimpak_tree.py`
 when the build is configured and again before every build. The tool mirrors the
-engine's `src/` into `<build>/stimpack-tree/src`, applies the patches there, adds
-Stimpack's own sources, and writes only files whose content changed. The game
+engine's `src/` into `<build>/stimpak-tree/src`, applies the patches there, adds
+Stimpak's own sources, and writes only files whose content changed. The game
 target is then compiled from that tree. Unpatched files carry a `#line` directive,
 so compiler messages and debuggers point at the original files.
 
-`python3 tools/stimpack_tree.py --engine engine --check` reports whether the
+`python3 tools/stimpak_tree.py --engine engine --check` reports whether the
 patches apply, without building.
 
-Stimpack makes the art it needs (the main menu with a seventh button and its
+Stimpak makes the art it needs (the main menu with a seventh button and its
 options-style panel) at run time from the player's own game files
-(`src/stimpack_art.cc`), so no game art is part of the repository or the packages.
+(`src/stimpak_art.cc`), so no game art is part of the repository or the packages.
 
 ## Tests
 
@@ -71,7 +71,7 @@ its own `data/` for saves and settings, and holds the screenshots of every run i
 
 No saved games are shipped. `test_new_game` starts a new game with the first
 premade character and saves it in slot 1; the other tests open that save (or
-saves made by earlier tests) in Stimpack, edit it through the user interface,
+saves made by earlier tests) in Stimpak, edit it through the user interface,
 save it, load the result and compare dumps of the game state. The checks are
 relative (for example "Strength went up by 3, capped at 10; nothing but stats,
 skills, perks, level and caps changed"), so they do not depend on the premade
@@ -91,28 +91,28 @@ where screenshots and dumps go, `--dev-fast` makes palette fades instant and
 are described in `src/dev_automation.h`, and the scripts in `tests/scripts/` are
 examples. Other code can add commands (see INTEGRATING.md).
 
-## Working on Stimpack
+## Working on Stimpak
 
 The patches are not edited by hand. Make a development checkout, work in it like
 in any engine checkout, and export the result:
 
 ```sh
-tools/dev_checkout.py ../stimpack-dev     # engine + patches + sources, committed
-cmake -S ../stimpack-dev -B ../stimpack-dev/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-cmake --build ../stimpack-dev/build --target fallout2-ce
-tests/run_tests.py --build-dir ../stimpack-dev/build --game-dir ...
-tools/export_patches.py ../stimpack-dev   # back into src/, patches/ and data/
+tools/dev_checkout.py ../stimpak-dev     # engine + patches + sources, committed
+cmake -S ../stimpak-dev -B ../stimpak-dev/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build ../stimpak-dev/build --target fallout2-ce
+tests/run_tests.py --build-dir ../stimpak-dev/build --game-dir ...
+tools/export_patches.py ../stimpak-dev   # back into src/, patches/ and data/
 ```
 
 `export_patches.py` copies new files under `src/` into this repository's `src/`
 and writes one patch per changed engine file. Changes to the checkout's
-CMakeLists.txt are not exported (Stimpack.cmake adds the sources).
+CMakeLists.txt are not exported (Stimpak.cmake adds the sources).
 
 ### Moving to a newer engine
 
 1. Update the submodule (`git -C engine checkout <commit>`) and `engine-version.txt`.
-2. `python3 tools/stimpack_tree.py --engine engine --check`. If a patch no longer
+2. `python3 tools/stimpak_tree.py --engine engine --check`. If a patch no longer
    applies, make a development checkout at the old commit, rebase its
-   `stimpack-dev` branch onto the new commit, resolve the conflicts, and export
+   `stimpak-dev` branch onto the new commit, resolve the conflicts, and export
    with `--base <new commit>`.
 3. Build and run the tests.

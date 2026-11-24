@@ -1,7 +1,7 @@
 name: Build
 
 # Every push and pull request: the patches apply to the pinned engine, and the
-# game builds with Stimpack on macOS, Linux and Windows (the packages are kept
+# game builds with Stimpak on macOS, Linux and Windows (the packages are kept
 # as workflow artifacts). A published GitHub release also gets the packages.
 #
 # The automated tests need a copy of Fallout 2's game data, which cannot be
@@ -34,7 +34,7 @@ jobs:
           actual="$(git -C engine rev-parse HEAD)"
           test "$pinned" = "$actual" || { echo "engine/ is at $actual, engine-version.txt says $pinned"; exit 1; }
       - name: Apply patches
-        run: python3 tools/stimpack_tree.py --engine engine --check
+        run: python3 tools/stimpak_tree.py --engine engine --check
 
   package:
     name: Package (${{ matrix.name }})
@@ -73,7 +73,7 @@ jobs:
       - name: Keep the package
         uses: actions/upload-artifact@v4
         with:
-          name: stimpack-${{ matrix.name }}
+          name: stimpak-${{ matrix.name }}
           path: |
             dist/*.zip
             dist/*.tar.gz
