@@ -6,6 +6,13 @@ character, your companions, the party, quests or where you are, then save the
 result as a new saved game in a slot you choose, or play on with it straight
 away.
 
+Stimpak 1.0.0 is built on [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce)
+at commit [`c30f1efc`](https://github.com/fallout2-ce/fallout2-ce/commit/c30f1efce64b96696c150603cc6dfce5d74645cc)
+(20 November 2026; v1.3.0 + 1573 commits, the code of CE's
+[Continuous Build](https://github.com/fallout2-ce/fallout2-ce/releases/tag/continious)
+of that day). Each Stimpak package is that build of Community Edition with the
+editor included: one download gives you both.
+
 The editor uses the game's own screens and rules, so what you edit is what the game
 will load: stats are capped where the game caps them, derived values (hit points,
 carry weight, action points and so on) are recalculated by the game, and the save
@@ -43,14 +50,28 @@ confirm).
 
 `tools/screenshots.py` makes these images from a real build and your own game data.
 
+## Supported platforms
+
+| System | Package | Runs on |
+| --- | --- | --- |
+| macOS | `stimpak-<version>-macos.zip` | macOS 10.13 or later, Intel and Apple Silicon (universal app) |
+| Windows | `stimpak-<version>-windows-x64.zip` | Windows 10 and 11, 64-bit |
+| Linux | `stimpak-<version>-linux-x64.tar.gz` | 64-bit x86 distributions with glibc 2.35 or later (Ubuntu 22.04, Debian 12, Fedora 36 and newer) |
+
+These three are built and packaged by this repository's CI on every change.
+Stimpak also builds from source on any system with CMake, a C++17 compiler and
+Python; see [docs/BUILDING.md](docs/BUILDING.md).
+
 ## Installing
 
-You need your own copy of Fallout 2 (GOG, Steam or the original CD release).
-Stimpak is a complete build of Fallout 2 Community Edition with the editor added:
-it replaces the CE executable, or plays a vanilla installation.
+Stimpak runs on your own copy of Fallout 2 (GOG, Steam, Epic or the original CD).
+It is a complete build of Fallout 2 Community Edition with the editor added: it
+takes the place of the CE executable, or turns a classic installation into CE
+with Stimpak.
 
-1. Download the package for your system from the releases page:
-   `stimpak-<version>-macos.zip`, `-windows-x64.zip` or `-linux-x64.tar.gz`.
+1. Download the package for your system from
+   [Releases](https://github.com/lukmusial/fallout2-stimpak/releases/latest)
+   on this repository.
 2. Follow [docs/INSTALL.md](docs/INSTALL.md) (also inside the package). In short:
    put the executable next to your game's `master.dat` and `critter.dat`, the same
    way Fallout 2 Community Edition is installed.
