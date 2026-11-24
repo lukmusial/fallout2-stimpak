@@ -72,16 +72,22 @@ class Runner:
         self.run_dir.mkdir(parents=True)
         for name in GAME_FILES + GAME_DIRS:
             if (self.game_dir / name).exists():
-                (self.run_dir / name).symlink_to(self.game_dir / name)
+                link(self.game_dir / name, self.run_dir / name)
         engine_files = self.engine_dir() / "files"
         if (engine_files / "f2_res.dat").is_file():
-            (self.run_dir / "f2_res.dat").symlink_to(engine_files / "f2_res.dat")
+            link(engine_files / "f2_res.dat", self.run_dir / "f2_res.dat")
         (self.run_dir / "data").mkdir()
         self.write_config(engine_files / "fallout2.cfg")
 
         if self.app_bundle():
             # The macOS build looks for the game data next to the .app.
-            (self.run_dir / self.app_bundle().name).symlink_to(self.app_bundle())
+            link(self.app_bundle(), self.run_dir / self.app_bundle().name)
+        else:
+            # Windows and Linux: the game reads fallout2.cfg and ce.dat from
+            # the folder its executable is in, so it runs from the run directory.
+            link(self.exe, self.run_dir / self.exe.name)
+            if (self.exe.parent / "ce.dat").is_file():
+                link(self.exe.parent / "ce.dat", self.run_dir / "ce.dat")
 
     def app_bundle(self):
         return self.exe.parents[2] if platform.system() == "Darwin" and self.exe.parents[2].suffix == ".app" else None
@@ -89,7 +95,7 @@ class Runner:
     def engine_dir(self):
         cache = self.build_dir / "CMakeCache.txt"
         if cache.is_file():
-            for line in cache.read_text(errors="replace").splitlines():
+            for line in cache.read_text(encoding="utf-8", errors="replace").splitlines():
                 if line.startswith("CMAKE_HOME_DIRECTORY:"):
                     return Path(line.split("=", 1)[1])
         return ROOT / "engine"
@@ -103,10 +109,10 @@ class Runner:
             "output_map_data_info": "0",
         }
         lines = []
-        for line in template.read_text(errors="replace").splitlines():
+        for line in template.read_text(encoding="utf-8", errors="replace").splitlines():
             key = line.split("=", 1)[0].strip()
             lines.append(f"{key}={pinned[key]}" if key in pinned and "=" in line else line)
-        (self.run_dir / "fallout2.cfg").write_text("\n".join(lines) + "\n")
+        (self.run_dir / "fallout2.cfg").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def run(self, name, script, extra_args=()):
         out_dir = self.run_dir / "devout" / name
@@ -114,7 +120,7 @@ class Runner:
             shutil.rmtree(out_dir)
         out_dir.mkdir(parents=True)
         app = self.app_bundle()
-        exe = self.run_dir / app.name / self.exe.relative_to(app) if app else self.exe
+        exe = self.run_dir / app.name / self.exe.relative_to(app) if app else self.run_dir / self.exe.name
         args = [str(exe), f"--dev-script={SCRIPTS / script}", f"--dev-out={out_dir}", "--dev-fast", *extra_args]
         try:
             result = subprocess.run(args, cwd=self.run_dir, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
@@ -128,20 +134,43 @@ class Runner:
 
     def state_of_slot(self, slot, name):
         out = self.run(name, "load_slot.txt", [f"--dev-load-game={slot}"])
-        return json.loads((out / "state.json").read_text())
+        return json.loads((out / "state.json").read_text(encoding="utf-8", errors="replace"))
 
     def slot_dir(self, slot):
         return self.run_dir / "data" / "SAVEGAME" / f"SLOT{slot:02d}"
 
     def clear_slots_after(self, slot):
+        # Save slot folders are SLOT01, SLOT02, ...; on Windows the pattern
+        # match is case-insensitive and also finds slotdat.ini.
         for path in (self.run_dir / "data" / "SAVEGAME").glob("SLOT*"):
-            if int(path.name[4:]) > slot:
+            if path.is_dir() and path.name[4:].isdigit() and int(path.name[4:]) > slot:
                 shutil.rmtree(path)
 
 
+def link(source: Path, target: Path):
+    """A symbolic link; where the system refuses one (Windows without
+    developer mode), a hard link or a copy for files. Folders that cannot be
+    linked are left out (the game runs without its sound folder)."""
+    try:
+        target.symlink_to(source, target_is_directory=source.is_dir())
+        return
+    except OSError:
+        pass
+    if source.is_dir():
+        print(f"note: {source.name}/ not linked into the run directory", file=sys.stderr)
+        return
+    try:
+        os.link(source, target)
+    except OSError:
+        shutil.copy2(source, target)
+
+
 def find_executable(build_dir: Path) -> Path:
-    candidates = [*build_dir.glob("*.app/Contents/MacOS/*"), build_dir / "fallout2-ce",
-                  *build_dir.glob("*/fallout2-ce.exe"), build_dir / "fallout2-ce.exe"]
+    """The game in a build or package folder: the macOS .app, fallout2-ce(.exe)
+    there, or in a configuration subfolder (Visual Studio's Release/). The
+    run directory (test-run/), which holds copies, is never searched."""
+    candidates = [*build_dir.glob("*.app/Contents/MacOS/*"), build_dir / "fallout2-ce", build_dir / "fallout2-ce.exe",
+                  *(p for p in build_dir.glob("*/fallout2-ce.exe") if p.parent.name != "test-run")]
     candidates = [c for c in candidates if c.is_file()]
     if not candidates:
         raise SystemExit(f"no game executable in {build_dir} (build first: tools/build.sh Debug)")
@@ -300,7 +329,7 @@ def test_play(runner):
     """PLAY: the edited game runs at once (here with 5000 caps); nothing is saved."""
     runner.clear_slots_after(1)
     out = runner.run("play", "play.txt")
-    state = json.loads((out / "state.json").read_text())
+    state = json.loads((out / "state.json").read_text(encoding="utf-8", errors="replace"))
     expect(state["player"]["caps"] == 5000, f"caps {state['player']['caps']} in the running game")
     expect(state["world"]["map_name"] == runner.start["world"]["map_name"], f"in {state['world']['map_name']}")
     expect(not runner.slot_dir(2).exists(), "PLAY saved a game")
@@ -375,7 +404,10 @@ def main():
             print(f"FAIL {test.__name__:22} {time.time() - started:5.1f}s  {error}", flush=True)
             if test is test_new_game:
                 break
-    print(f"{len(selected) - failures}/{len(selected)} passed; screenshots in {runner.run_dir / 'devout'}")
+    ran = selected.index(test) + 1
+    skipped = len(selected) - ran
+    note = f", {skipped} not run (the new-game fixture failed)" if skipped else ""
+    print(f"{ran - failures}/{len(selected)} passed{note}; screenshots in {runner.run_dir / 'devout'}")
     return 1 if failures else 0
 
 

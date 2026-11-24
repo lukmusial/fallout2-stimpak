@@ -35,8 +35,17 @@ it, and you can switch back at any time. Saved games work in both.
    or the Mac CD's `GameData`).
 2. Unzip `stimpak-<version>-macos.zip` and copy `Fallout II Community Edition.app`
    into that folder, next to `master.dat`.
-3. The app is not notarised by Apple. On first start, right-click (or Control-click)
-   the app, choose **Open**, then **Open** again. Later starts work as usual.
+3. The app carries its own (ad-hoc) signature rather than an Apple-notarised
+   one, so on first start macOS asks before opening it:
+   * macOS 15 (Sequoia) and later: open the app once, close the message, then
+     go to **System Settings → Privacy & Security**, scroll to *Security* and
+     choose **Open Anyway** next to "Fallout II Community Edition", and confirm.
+   * macOS 14 and earlier: right-click (or Control-click) the app, choose
+     **Open**, then **Open** again.
+
+   Later starts work as usual. In Terminal,
+   `xattr -dr com.apple.quarantine "Fallout II Community Edition.app"` does the
+   same in one step.
 
 ## Linux
 
