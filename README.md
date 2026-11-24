@@ -6,7 +6,7 @@ character, your companions, the party, quests or where you are, then save the
 result as a new saved game in a slot you choose, or play on with it straight
 away.
 
-Stimpak 1.0.0 is built on [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce)
+Stimpak 1.0.1 is built on [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce)
 at commit [`c30f1efc`](https://github.com/fallout2-ce/fallout2-ce/commit/c30f1efce64b96696c150603cc6dfce5d74645cc)
 (20 November 2026; v1.3.0 + 1573 commits, the code of CE's
 [Continuous Build](https://github.com/fallout2-ce/fallout2-ce/releases/tag/continious)
