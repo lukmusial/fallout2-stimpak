@@ -1,0 +1,50 @@
+# Stimpack on slot 2 (made by the lists test, Sulik in the party): level the
+# first companion up once, ST +1, Melee Weapons +5 points, hit points 70/90;
+# saved to the first empty slot.
+until mainmenu 20000
+wait 300
+key s
+wait 1200
+key home
+key down
+key enter
+until stimpack 30000
+wait 500
+key o
+wait 800
+shot picker
+key 1
+wait 1500
+shot companion_open
+# Level up: click the level line, confirm
+click 60 283
+wait 800
+key enter
+wait 800
+click 155 42
+click 420 74
+click 620 68
+click 620 68
+click 620 68
+click 620 68
+click 620 68
+wait 300
+click 230 48
+until input 10000
+key backspace 6
+text 70/90
+key enter
+wait 500
+shot companion_final
+key enter
+wait 800
+key esc
+wait 800
+key s
+wait 1200
+key enter
+until input 10000
+text stimpack companion
+key enter
+until mainmenu 30000
+quit 0

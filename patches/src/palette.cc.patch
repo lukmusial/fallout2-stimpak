@@ -1,0 +1,24 @@
+Stimpack patch for src/palette.cc (engine commit c30f1efce64b).
+
+diff --git a/src/palette.cc b/src/palette.cc
+index 0e40859e..d70af50c 100644
+--- a/src/palette.cc
++++ b/src/palette.cc
+@@ -5,6 +5,7 @@
+ #include "color.h"
+ #include "cycle.h"
+ #include "debug.h"
++#include "dev_automation.h"
+ #include "game_sound.h"
+ #include "input.h"
+ #include "settings.h"
+@@ -85,7 +86,8 @@ void paletteFadeTo(unsigned char* palette)
+         colorPaletteSetTransitionCallback(soundContinueAll);
+     }
+ 
+-    colorPaletteFadeBetween(gPalette, palette, gPaletteFadeSteps);
++    // Test runs with --dev-fast jump straight to the target palette.
++    colorPaletteFadeBetween(gPalette, palette, devAutomationFastFades() ? 1 : gPaletteFadeSteps);
+     colorPaletteSetTransitionCallback(nullptr);
+ 
+     memcpy(gPalette, palette, 768);

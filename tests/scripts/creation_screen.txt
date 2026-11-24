@@ -1,0 +1,11 @@
+# The game's own character creation screen still works.
+until mainmenu 20000
+wait 300
+key n
+wait 1500
+key c
+wait 2000
+shot creation
+key esc
+wait 1000
+quit 0

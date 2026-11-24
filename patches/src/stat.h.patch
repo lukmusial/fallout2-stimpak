@@ -1,0 +1,15 @@
+Stimpack patch for src/stat.h (engine commit c30f1efce64b).
+
+diff --git a/src/stat.h b/src/stat.h
+index 78f97df3..a600707c 100644
+--- a/src/stat.h
++++ b/src/stat.h
+@@ -46,6 +46,8 @@ int pcSetStat(PcStat pcStat, int value);
+ void pcStatsReset();
+ int pcGetExperienceForNextLevel();
+ int pcGetExperienceForLevel(int level);
++// Highest player level (PC_LEVEL_MAX unless changed by configuration).
++int pcGetMaxLevel();
+ char* pcStatGetName(PcStat pcStat);
+ char* pcStatGetDescription(PcStat pcStat);
+ SkillDexFrmId statGetFrmId(Stat stat);

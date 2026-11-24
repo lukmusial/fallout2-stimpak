@@ -1,0 +1,18 @@
+Stimpack patch for src/sfall_arrays.cc (engine commit c30f1efce64b).
+
+diff --git a/src/sfall_arrays.cc b/src/sfall_arrays.cc
+index da57b3d7..3cf639e3 100644
+--- a/src/sfall_arrays.cc
++++ b/src/sfall_arrays.cc
+@@ -1084,8 +1084,10 @@ bool sfallArraysLoad(File* stream)
+         return true;
+     }
+ 
++    // CE 1.3.0 wrote a single zero DWORD for the arrays section and nothing
++    // after it, so a missing count right here means "no arrays".
+     int count;
+-    if (fileRead(&count, sizeof(count), 1, stream) != 1) return false;
++    if (fileRead(&count, sizeof(count), 1, stream) != 1) return fileEof(stream) != 0;
+     if (count <= 0) return true;
+     if (count > ARRAY_MAX_SIZE) return false; // sanity bound against corrupt data
+ 

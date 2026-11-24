@@ -1,0 +1,21 @@
+# Fixture: start a new game with the first premade character, skip the intro,
+# save it in slot 1 as "start".
+until mainmenu 20000
+wait 300
+key n
+wait 1500
+key t
+wait 2000
+key esc
+until game 60000
+wait 1000
+key f4
+wait 1500
+key home
+key enter
+until input 10000
+text start
+key enter
+wait 1500
+shot game
+quit 0

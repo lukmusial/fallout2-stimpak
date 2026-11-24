@@ -1,0 +1,23 @@
+Stimpack patch for src/win32.cc (engine commit c30f1efce64b).
+
+diff --git a/src/win32.cc b/src/win32.cc
+index 36f04545..956f0e58 100644
+--- a/src/win32.cc
++++ b/src/win32.cc
+@@ -21,6 +21,7 @@
+ #else
+ #include "main.h"
+ #endif
++#include "dev_automation.h"
+ #include "svga.h"
+ #include "window_manager.h"
+ 
+@@ -95,6 +96,8 @@ int main(int argc, char* argv[])
+     SDL_free(basePath);
+ #endif
+ 
++    devAutomationEarlyInit(argc, argv);
++
+ #if __ANDROID__
+     SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
+     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
