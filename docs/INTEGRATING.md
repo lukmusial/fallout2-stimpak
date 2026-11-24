@@ -1,0 +1,117 @@
+# Adding Stimpak to another build of the game
+
+Any project built on Fallout 2 Community Edition (a fork with its own changes,
+a total conversion, a graphics mod) can include Stimpak without copying its
+code. The project's own sources stay unpatched in its repository; the patches are
+applied to a copy at build time.
+
+## Including it
+
+```sh
+git submodule add <stimpak repository> external/stimpak
+```
+
+In the project's CMakeLists.txt, after the game target is defined:
+
+```cmake
+include(external/stimpak/cmake/Stimpak.cmake)
+stimpak_attach(${EXECUTABLE_NAME})   # the fallout2-ce target
+```
+
+That is all. The target now compiles `<build>/stimpak-tree/src`: the project's
+`src/` with Stimpak's patches applied and its sources added. Edits in the
+project's `src/` are picked up on the next build. `FALLOUT2_STIMPAK` is defined
+for the target, and `STIMPAK_VERSION` holds the version string.
+
+### When a patch does not apply
+
+The patches are applied exactly when possible, otherwise with a fuzz of three
+lines, which absorbs most nearby changes a fork makes. If a fork changes the very
+lines a patch touches, configuring fails and prints the rejected hunk. Then either
+move the fork's change a few lines away from Stimpak's hook, or merge the patch
+into the fork's file yourself (next section).
+`python3 external/stimpak/tools/stimpak_tree.py --engine . --check` tests this
+without building.
+
+Stimpak's own files (`src/stimpak*.cc`, `src/dev_automation.*`) must not exist in
+the project's `src/`.
+
+### Files that carry the patch merged in
+
+Where a fork's own changes are interwoven with a patch (for example a fork that
+redraws the character screen, which Stimpak's editor mode also changes), the fork
+can keep that file with Stimpak's patch already merged into it. It lists the file
+in `stimpak-merged.txt` at its root, with the hash of the patch it merged:
+
+```
+# file                    Stimpak patch hash
+src/character_editor.cc   5244acd3691b6fb1
+```
+
+`tools/stimpak_tree.py --engine . --patch-hash src/character_editor.cc` prints
+the hash. The build then uses the fork's file as it is. When a newer Stimpak
+changes that patch, the hash no longer matches and configuring stops with a
+message naming the file: merge the new patch (`git diff` between the two Stimpak
+versions of `patches/src/<file>.patch` shows what changed) and update the hash.
+
+## Hooks for other mods
+
+All of these are optional and live in Stimpak's own headers, which the project's
+code can include once Stimpak is attached.
+
+### Drawing (`stimpak.h`)
+
+A graphics mod that draws its own version of images (for example high-resolution
+art over the game's 8-bit buffers) learns about every image Stimpak draws:
+
+```cpp
+StimpakRenderHooks hooks;
+hooks.imageDrawn = [](int window, const FrmImage& image, int srcX, int srcY,
+                      int width, int height, int destX, int destY) { /* ... */ };
+hooks.buttonArt = [](int button, const FrmImage* normal, const FrmImage* pressed) { /* ... */ };
+stimpakSetRenderHooks(hooks);
+```
+
+Stimpak's character editor mode uses the game's own character screen, so a mod
+that already handles that screen needs nothing more there.
+
+### Generated art (`art.h`, added by the patches)
+
+```cpp
+artRegisterGenerator("my_panel.png", [](int* width, int* height, std::vector<unsigned char>* pixels) {
+    // fill a palette-indexed, single-frame image
+    return true;
+});
+```
+
+The game then loads `art/<type>/my_panel.png` from the generator whenever no file
+of that name exists. Stimpak's menu art is made this way (`stimpak_art.h` lists
+the names: `mainmenu_sp.png`, `hr_menu_bg_sp.png`, `opbase_sp.png`). A mod can ship
+files of those names to replace them, and a mod that looks up its own versions of
+images by name (for example high-resolution packs) can use the same names.
+
+### Test harness (`dev_automation.h`)
+
+Projects can add commands to the scripted test mode:
+
+```cpp
+devAutomationRegisterCommand("mycommand", [](const DevAutomationCommand& command, bool first) {
+    // command.args: the words after the name; return false to be called again
+    // on the next input poll (a command that waits), true when done.
+    if (command.args.empty()) {
+        devAutomationFail(command, "missing argument");
+    }
+    return true;
+});
+devAutomationRegisterTicker([] { /* every input poll while a script runs */ });
+devAutomationSetShotWriter([](const char* path) { /* write `shot` images your way */ return true; });
+```
+
+`devAutomationOutputPath`, `devAutomationSetMouse` and `devAutomationGetMouse`
+give access to the output folder and the scripted cursor.
+
+### Engine state marks
+
+`devAutomationSetState("...")` marks what the game is doing (`mainmenu`, `game`,
+`stimpak`, `input`); scripts wait for them with `until`. A project can set its
+own marks in its own screens.

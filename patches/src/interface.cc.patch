@@ -1,0 +1,24 @@
+Stimpak patch for src/interface.cc (engine commit c30f1efce64b).
+
+diff --git a/src/interface.cc b/src/interface.cc
+index 17bdfc65..d779867c 100644
+--- a/src/interface.cc
++++ b/src/interface.cc
+@@ -780,12 +780,11 @@ int interfaceLoad(File* stream)
+         interfaceBarEnable();
+     }
+ 
+-    if (interfaceBarHidden) {
+-        // NOTE: Uninline.
+-        interfaceBarHide();
+-    } else {
+-        interfaceBarShow();
+-    }
++    // A game can only be saved during normal play, with the bar shown. Early
++    // Stimpak builds saved it with the bar hidden (the editor's hub hides
++    // it), so a stored "hidden" is ignored and the bar is always shown.
++    (void)interfaceBarHidden;
++    interfaceBarShow();
+ 
+     interfaceRenderHitPoints(false);
+     interfaceRenderArmorClass(false);

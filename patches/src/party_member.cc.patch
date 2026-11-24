@@ -1,0 +1,39 @@
+Stimpak patch for src/party_member.cc (engine commit c30f1efce64b).
+
+diff --git a/src/party_member.cc b/src/party_member.cc
+index 3791fb5b..87c889a0 100644
+--- a/src/party_member.cc
++++ b/src/party_member.cc
+@@ -1588,6 +1588,32 @@ int _partyMemberIncLevels()
+     return partyMemberIncLevels(nullptr);
+ }
+ 
++bool partyMemberGetLevelInfo(Object* object, int* level, int* maxLevel)
++{
++    if (object == nullptr) {
++        return false;
++    }
++
++    for (int index = 1; index < gPartyMemberDescriptionsLength; index++) {
++        if (gPartyMemberProtoIds[index] == ProtoId(object)) {
++            const PartyMemberDescription& description = gPartyMemberDescriptions[index];
++            if (description.level_up_every == 0 || description.level_pids_num <= 0) {
++                return false;
++            }
++            *level = _partyMemberLevelUpInfoList[index].level;
++            *maxLevel = description.level_pids_num;
++            return true;
++        }
++    }
++
++    return false;
++}
++
++int partyMemberLevelUpNow(Object* object)
++{
++    return partyMemberIncLevels(object);
++}
++
+ bool partyMemberEngineLevelUpEnabled()
+ {
+     return npcEngineLevelUp;

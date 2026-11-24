@@ -1,0 +1,23 @@
+Stimpak patch for src/stat.cc (engine commit c30f1efce64b).
+
+diff --git a/src/stat.cc b/src/stat.cc
+index 907c3b61..29f8c579 100644
+--- a/src/stat.cc
++++ b/src/stat.cc
+@@ -114,7 +114,6 @@ static int xpTable[PC_LEVEL_MAX];
+ static int xpTableThresholds = 0;
+ 
+ static void pcExperienceTableInit();
+-static int pcGetMaxLevel();
+ static int pcGetLevelForExperience(int xp);
+ 
+ static std::string_view pcExperienceTableTrimToken(std::string_view token)
+@@ -840,7 +839,7 @@ static void pcExperienceTableInit()
+     }
+ }
+ 
+-static int pcGetMaxLevel()
++int pcGetMaxLevel()
+ {
+     if (xpTableThresholds == 0) {
+         return PC_LEVEL_MAX;

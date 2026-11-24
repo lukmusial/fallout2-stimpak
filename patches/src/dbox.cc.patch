@@ -1,0 +1,29 @@
+Stimpak patch for src/dbox.cc (engine commit c30f1efce64b).
+
+diff --git a/src/dbox.cc b/src/dbox.cc
+index 48d80552..81d21d4a 100644
+--- a/src/dbox.cc
++++ b/src/dbox.cc
+@@ -9,6 +9,7 @@
+ #include "character_editor.h"
+ #include "color.h"
+ #include "debug.h"
++#include "dev_automation.h"
+ #include "draw.h"
+ #include "game.h"
+ #include "game_sound.h"
+@@ -600,6 +601,14 @@ const char* showDescriptionInputDialog(const char* title, const char* currentInp
+     ScopedFont mainFontGuard(101);
+     static std::string result;
+ 
++    // Test harness: scripts wait for `input` before typing.
++    std::string previousAutomationState = devAutomationGetState();
++    devAutomationSetState("input");
++    struct AutomationStateRestore {
++        std::string state;
++        ~AutomationStateRestore() { devAutomationSetState(state.c_str()); }
++    } automationStateRestore { previousAutomationState };
++
+     descriptionInput::DialogFrms frms;
+     if (!descriptionInput::loadImages(frms)) return nullptr;
+ 

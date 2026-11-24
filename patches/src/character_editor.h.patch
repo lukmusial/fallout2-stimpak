@@ -1,0 +1,27 @@
+Stimpak patch for src/character_editor.h (engine commit c30f1efce64b).
+
+diff --git a/src/character_editor.h b/src/character_editor.h
+index 50783f1d..1b057595 100644
+--- a/src/character_editor.h
++++ b/src/character_editor.h
+@@ -4,6 +4,7 @@
+ #include <vector>
+ 
+ #include "db.h"
++#include "obj_types.h"
+ 
+ namespace fallout {
+ 
+@@ -20,6 +21,12 @@ enum PerkCarryOverMode {
+ };
+ 
+ int characterEditorShow(bool isCreationMode);
++// Stimpak: free editing of the loaded player character. Returns 0 (done) or
++// 1 (cancelled, all changes reverted).
++int characterEditorShowStimpak();
++// Stimpak: the same editor for a companion (stats, skills, hit points, perks,
++// level-up). Returns 0 (done) or 1 (cancelled, changes reverted).
++int characterEditorShowStimpakCompanion(Object* companion);
+ void characterEditorInit();
+ bool _isdoschar(int ch);
+ char* _strmfe(char* dest, const char* name, const char* ext);

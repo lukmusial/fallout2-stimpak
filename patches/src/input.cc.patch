@@ -1,0 +1,59 @@
+Stimpak patch for src/input.cc (engine commit c30f1efce64b).
+
+diff --git a/src/input.cc b/src/input.cc
+index baaf5395..70822947 100644
+--- a/src/input.cc
++++ b/src/input.cc
+@@ -7,6 +7,7 @@
+ #include "color.h"
+ #include "debug.h"
+ #include "delay.h"
++#include "dev_automation.h"
+ #include "dinput.h"
+ #include "draw.h"
+ #include "game.h"
+@@ -225,6 +226,8 @@ void _process_bk()
+ {
+     int v1;
+ 
++    devAutomationTick();
++
+     tickersExecute();
+ 
+     _mouse_info();
+@@ -1008,6 +1011,24 @@ void _GNW95_process_message()
+     KeyboardData keyboardData;
+     SDL_Event e;
+     while (SDL_PollEvent(&e)) {
++        // Scripted runs take input only from the script; stray user input
++        // (e.g. typing into a window that briefly had focus) would change results.
++        if (devAutomationIsActive()) {
++            switch (e.type) {
++            case SDL_MOUSEMOTION:
++            case SDL_MOUSEBUTTONDOWN:
++            case SDL_MOUSEBUTTONUP:
++            case SDL_MOUSEWHEEL:
++            case SDL_FINGERDOWN:
++            case SDL_FINGERMOTION:
++            case SDL_FINGERUP:
++            case SDL_KEYDOWN:
++            case SDL_KEYUP:
++            case SDL_TEXTINPUT:
++                continue;
++            }
++        }
++
+         switch (e.type) {
+         case SDL_MOUSEMOTION:
+         case SDL_MOUSEBUTTONDOWN:
+@@ -1064,6 +1085,10 @@ void _GNW95_process_message()
+                 audioEngineResume();
+                 break;
+             case SDL_WINDOWEVENT_FOCUS_LOST:
++                // Scripted runs keep going in the background.
++                if (devAutomationIsActive()) {
++                    break;
++                }
+                 gProgramIsActive = false;
+                 mouseDeviceInitMode();
+                 audioEnginePause();

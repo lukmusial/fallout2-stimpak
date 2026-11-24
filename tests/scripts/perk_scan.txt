@@ -1,0 +1,24 @@
+# Stimpak's perk editor: the card of every perk (some perks have no texts).
+until mainmenu 20000
+wait 300
+key s
+wait 1200
+key home
+key enter
+until stimpak 30000
+wait 500
+key c
+wait 1500
+key p
+wait 800
+key down 200
+wait 300
+shot perks_end
+key up 200
+key enter
+wait 500
+key esc
+wait 500
+key e
+until mainmenu 30000
+quit 0
