@@ -7,8 +7,8 @@
 #   Windows  stimpak-<version>-windows-x64.zip (run from Git Bash)
 #
 # Each archive also holds README, INSTALL, LICENSE, an example fallout2.cfg and
-# the English stimpak.msg (a template for translations). No game data is
-# included: players need their own copy of Fallout 2.
+# the English stimpak.msg (a template for translations). Players run it on
+# their own copy of Fallout 2.
 set -euo pipefail
 
 STIMPAK_DIR="$(cd "$(dirname "$0")/.." && pwd)"

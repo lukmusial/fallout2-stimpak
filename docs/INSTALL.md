@@ -2,8 +2,8 @@
 
 Stimpak is a complete build of Fallout 2 Community Edition (CE) with the savegame
 editor added. It installs exactly like CE and uses the same game folder, settings
-and saved games. You must own Fallout 2 (GOG, Steam, Epic or the original CD);
-no game data comes with Stimpak.
+and saved games. It runs on your own copy of Fallout 2 (GOG, Steam, Epic or
+the original CD).
 
 Each package holds:
 

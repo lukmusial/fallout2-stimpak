@@ -3,8 +3,8 @@
 Stimpak is a savegame editor that runs inside [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce).
 It adds a **STIMPAK** button to the main menu. Pick a saved game, change your
 character, your companions, the party, quests or where you are, then save the
-result as a new saved game. The original save is never overwritten unless you
-choose its slot yourself.
+result as a new saved game in a slot you choose, or play on with it straight
+away.
 
 The editor uses the game's own screens and rules, so what you edit is what the game
 will load: stats are capped where the game caps them, derived values (hit points,
@@ -85,14 +85,32 @@ tools/package.sh                # the release archive for this system, in dist/
 You need CMake 3.19 or newer, a C++17 compiler, Python 3.8 or newer and git. See
 [docs/BUILDING.md](docs/BUILDING.md) for platforms, tests and how the build works.
 
+## How it is built
+
+Stimpak is a layer on top of an unmodified Fallout 2 Community Edition source tree:
+
+* `engine/` is Fallout 2 Community Edition as a git submodule, pinned to the
+  commit in `engine-version.txt`.
+* `src/` holds Stimpak's own code: the editor and its screens (`stimpak.cc`), the
+  menu art it builds at run time from the player's own game images
+  (`stimpak_art.cc`), and a scripted test mode (`dev_automation.cc`).
+* `patches/src/<file>.patch` holds one small patch per engine file Stimpak hooks
+  into: the main-menu button, the editor mode of the game's character screen,
+  accessors for quests, towns and companions, and the test-mode hooks.
+* At build time `tools/stimpak_tree.py` mirrors the engine's `src/` into the build
+  folder, applies the patches there and adds Stimpak's sources; CMake
+  (`cmake/Stimpak.cmake`) compiles the game from that tree. Only changed files are
+  rewritten, so rebuilds stay incremental, and compiler messages point at the
+  original files.
+* The English texts are compiled in; `stimpak.msg` files in the game data add
+  translations.
+
 ## Adding Stimpak to another build of the game
 
-Stimpak does not fork the engine. It is a set of its own source files plus small
-patches to the engine's files (`patches/`), applied to a copy of the sources at
-build time. Another project built on Fallout 2 Community Edition can include it as
-a git submodule and add two lines to its CMakeLists.txt. Graphics mods can hook
-into its screens, and test code can add commands to its test harness. See
-[docs/INTEGRATING.md](docs/INTEGRATING.md).
+Another project built on Fallout 2 Community Edition includes Stimpak as a git
+submodule and attaches it with two lines in its CMakeLists.txt. Graphics mods hook
+into its screens through render hooks, and test code adds commands to its test
+mode. See [docs/INTEGRATING.md](docs/INTEGRATING.md).
 
 ## Translations
 
@@ -106,11 +124,11 @@ that are missing fall back to English.
 
 `tests/run_tests.py` drives a real build of the game through a scripted, hidden
 test mode. It starts a new game, saves it, edits it with Stimpak in many ways and
-checks the results in dumps of the game state. It needs your own Fallout 2 data
-and ships no saved games or game art. See [docs/BUILDING.md](docs/BUILDING.md#tests).
+checks the results in dumps of the game state. It runs on your own Fallout 2 data
+and creates the saved games it works with. See [docs/BUILDING.md](docs/BUILDING.md#tests).
 
 ## License
 
 Stimpak is built on Fallout 2 Community Edition and is distributed under the same
 [Sustainable Use License](LICENSE.md). Fallout 2 and its data belong to their
-owners; no game data is included in this repository or its packages.
+owners; Stimpak runs on the player's own copy of the game.

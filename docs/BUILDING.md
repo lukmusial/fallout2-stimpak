@@ -34,7 +34,7 @@ The repository has three parts:
 
 | Path | |
 | --- | --- |
-| `engine/` | Fallout 2 Community Edition as a git submodule, at the commit in `engine-version.txt`. Never modified. |
+| `engine/` | Fallout 2 Community Edition as a git submodule, at the commit in `engine-version.txt`; the build reads it as it is. |
 | `src/` | Stimpak's own sources (the editor, its menu art, the test harness). |
 | `patches/src/<file>.patch` | One patch per engine file Stimpak changes: small hooks (the menu button, the editor mode of the character screen, accessors for quests, towns and companions, the test harness hooks). |
 
@@ -50,12 +50,12 @@ patches apply, without building.
 
 Stimpak makes the art it needs (the main menu with a seventh button and its
 options-style panel) at run time from the player's own game files
-(`src/stimpak_art.cc`), so no game art is part of the repository or the packages.
+(`src/stimpak_art.cc`), so the repository and the packages hold only Stimpak's code.
 
 ## Tests
 
 The tests drive a real build through the game's scripted test mode and need a
-copy of Fallout 2's data (only read; nothing in the game folder is changed):
+copy of Fallout 2's data, which they only read:
 
 ```sh
 tools/build.sh Debug
@@ -69,7 +69,7 @@ script. The run directory is `<build>/test-run`; it links the game data, keeps
 its own `data/` for saves and settings, and holds the screenshots of every run in
 `devout/<test>/` for review.
 
-No saved games are shipped. `test_new_game` starts a new game with the first
+The tests make their own saved games: `test_new_game` starts a new game with the first
 premade character and saves it in slot 1; the other tests open that save (or
 saves made by earlier tests) in Stimpak, edit it through the user interface,
 save it, load the result and compare dumps of the game state. The checks are
