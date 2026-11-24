@@ -1,0 +1,27 @@
+Stimpak patch for src/svga.cc (engine commit c30f1efce64b).
+
+diff --git a/src/svga.cc b/src/svga.cc
+index 83350b97..677d112e 100644
+--- a/src/svga.cc
++++ b/src/svga.cc
+@@ -8,6 +8,7 @@
+ 
+ #include "color.h"
+ #include "config.h"
++#include "dev_automation.h"
+ #include "dinput.h"
+ #include "draw.h"
+ #include "game.h"
+@@ -166,6 +167,12 @@ int _GNW95_init_window(int width, int height, WindowMode mode, int scale)
+ 
+         Uint32 windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+ 
++        // Scripted runs render into hidden windows (screenshots come from the
++        // game's own buffers), so nothing appears on screen or takes focus.
++        if (devAutomationWantsHiddenWindow()) {
++            windowFlags |= SDL_WINDOW_HIDDEN;
++        }
++
+         if (mode == WindowMode::Fullscreen) {
+             windowFlags |= SDL_WINDOW_FULLSCREEN;
+         } else if (mode == WindowMode::WindowedFullscreen) {

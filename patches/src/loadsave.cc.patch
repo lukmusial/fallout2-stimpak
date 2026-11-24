@@ -1,0 +1,39 @@
+Stimpak patch for src/loadsave.cc (engine commit c30f1efce64b).
+
+diff --git a/src/loadsave.cc b/src/loadsave.cc
+index 044a0446..e3ee3d30 100644
+--- a/src/loadsave.cc
++++ b/src/loadsave.cc
+@@ -369,6 +369,14 @@ static constexpr char kLoadSaveSlotDataSection[] = "POSITION";
+ static constexpr char kLoadSaveSlotDataKey[] = "CurrentSlot";
+ static constexpr char kLoadSaveSlotDataFile[] = "SAVEGAME\\slotdat.ini";
+ 
++// Set by `lsgRequestEmptySlotOnNextSave`, consumed by the next normal save screen.
++static bool gLoadSaveStartOnEmptySlot = false;
++
++void lsgRequestEmptySlotOnNextSave()
++{
++    gLoadSaveStartOnEmptySlot = true;
++}
++
+ static void loadSaveRememberSelectedSlot()
+ {
+     assert(_patches != nullptr);
+@@ -625,6 +633,17 @@ int lsgSaveGame(LoadSaveMode mode)
+         return -1;
+     }
+ 
++    if (gLoadSaveStartOnEmptySlot) {
++        gLoadSaveStartOnEmptySlot = false;
++        for (int slot = 0; slot < saveLoadTotalSlots; slot++) {
++            if (_LSstatus[slot] == LoadSaveSlotState::Empty) {
++                _slot_cursor = slot;
++                _currentSlotPage = slot / slotsPerPage;
++                break;
++            }
++        }
++    }
++
+     switch (_LSstatus[_slot_cursor]) {
+     case LoadSaveSlotState::Empty:
+     case LoadSaveSlotState::Error:

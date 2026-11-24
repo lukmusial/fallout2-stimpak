@@ -1,0 +1,65 @@
+# Stimpak on slot 1: ST +3, Small Guns +10 points, one perk rank, level 12,
+# 5000 caps; saved to the first empty slot.
+until mainmenu 20000
+wait 300
+key s
+wait 1200
+key home
+key enter
+until stimpak 30000
+wait 500
+key c
+wait 1500
+shot editor_open
+# Strength: the + button next to ST
+click 155 42
+click 155 42
+click 155 42
+# Small Guns: select the row, then the slider's + button
+click 420 30
+click 620 24 
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+click 620 24
+wait 300
+# Perks: open, third perk, one rank
+key p
+wait 800
+key down
+key down
+key +
+wait 300
+shot perks
+key enter
+wait 500
+# Level: click the level line, replace the number
+click 60 283
+until input 10000
+key backspace 4
+text 12
+key enter
+wait 500
+# Caps: third line of the level box
+click 60 306
+until input 10000
+key backspace 10
+text 5000
+key enter
+wait 500
+shot editor_final
+key enter
+wait 800
+key s
+wait 1200
+key enter
+until input 10000
+text stimpak player
+key enter
+until mainmenu 30000
+quit 0
