@@ -5,6 +5,8 @@ editor added. It installs exactly like CE and uses the same game folder, setting
 and saved games. It runs on your own copy of Fallout 2 (GOG, Steam, Epic or
 the original CD).
 
+Download the package for your system from
+[Releases](https://github.com/lukmusial/fallout2-stimpak/releases/latest).
 Each package holds:
 
 | File | What it is |
@@ -42,8 +44,8 @@ it, and you can switch back at any time. Saved games work in both.
    installation copied over, or the GOG installer through `innoextract`).
 2. Extract `stimpak-<version>-linux-x64.tar.gz` and copy `fallout2-ce` and
    `ce.dat` into that folder.
-3. Run `./fallout2-ce` from that folder. The build uses the system's SDL2
-   (`libsdl2-2.0-0` on Debian and Ubuntu).
+3. Run `./fallout2-ce` from that folder. SDL2 is built into the game; it
+   needs a 64-bit x86 distribution with glibc 2.35 or later.
 
 ## Settings
 
