@@ -60,10 +60,13 @@ namespace {
             return false;
         }
 
+        // The band and its copy overlap (rows 255..256), so copy from the original.
+        const std::vector<unsigned char> original(*pixels);
         const size_t stride = static_cast<size_t>(*width);
         for (int y = kVanillaLastBandTop; y < kVanillaLastBandBottom; y++) {
-            unsigned char* row = pixels->data() + y * stride;
-            memcpy(row + kVanillaPitch * stride + kVanillaLeft, row + kVanillaLeft, kVanillaRight - kVanillaLeft);
+            memcpy(pixels->data() + (y + kVanillaPitch) * stride + kVanillaLeft,
+                original.data() + y * stride + kVanillaLeft,
+                kVanillaRight - kVanillaLeft);
         }
         return true;
     }
