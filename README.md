@@ -26,6 +26,23 @@ first; **SAVE AS** opens the game's save screen on the first empty slot; **EXIT*
 returns to the main menu (if you leave with unsaved changes, Stimpak asks you to
 confirm).
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Main menu with the STIMPAK button](docs/images/01_menu.png) | ![The Stimpak hub over the loaded game](docs/images/02_hub.png) |
+| The **STIMPAK** button in the main menu | The hub over the loaded game |
+| ![Character editor](docs/images/03_character.png) | ![Perk editor](docs/images/04_perks.png) |
+| Character: Strength, Small Guns, level 12, 5000 caps | Perks: any perk, any rank |
+| ![Roster](docs/images/05_roster.png) | ![Companion editor](docs/images/06_companion.png) |
+| Roster: Sulik joins the party | Companions: Sulik's stats and skills |
+| ![Quests](docs/images/07_quests.png) | ![Location](docs/images/08_location.png) |
+| Quests: set any quest's state | Location: towns on the world map, travel |
+| ![Hub after travelling to Klamath](docs/images/09_hub_klamath.png) | ![Playing the edited game](docs/images/10_play.png) |
+| The party is now in Klamath | **PLAY**: straight into the edited game |
+
+`tools/screenshots.py` makes these images from a real build and your own game data.
+
 ## Installing
 
 You need your own copy of Fallout 2 (GOG, Steam or the original CD release).
