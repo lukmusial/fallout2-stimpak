@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+* The high-resolution main menu (screens larger than 640x480 with the game's
+  high-resolution art) shows the seventh button plate under EXIT again. The
+  menu art generator loaded the original panel by name, which overwrote the
+  engine's shared name buffer while the menu was still looking its panel up,
+  so the menu received the six-plate original. The generator now loads by
+  path, and the engine's named-art cache keeps its own copy of the name.
+* Test: `test_menu_hires` checks the seventh plate at 2560x1200.
+
 ## 1.0.1
 
 The game is the same as in 1.0.0; this release updates the instructions and
