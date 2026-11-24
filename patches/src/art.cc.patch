@@ -1,7 +1,7 @@
 Stimpak patch for src/art.cc (engine commit c30f1efce64b).
 
 diff --git a/src/art.cc b/src/art.cc
-index 017a14cb..b24d9ff9 100644
+index 017a14cb..47887540 100644
 --- a/src/art.cc
 +++ b/src/art.cc
 @@ -16,11 +16,14 @@
@@ -85,3 +85,24 @@ index 017a14cb..b24d9ff9 100644
  }
  
  // 0x419FC0
+@@ -1606,15 +1659,18 @@ NamedCacheEntry::NamedCacheEntry(ArtPtr&& art)
+ {
+ }
+ 
+-std::shared_ptr<NamedCacheEntry> artLockNamedFrameData(const char* path)
++std::shared_ptr<NamedCacheEntry> artLockNamedFrameData(const char* pathArg)
+ {
++    // A copy: `pathArg` may point to a shared buffer (FrmImage::lock by name)
++    // that loading can overwrite (art generators lock other art).
++    const std::string path(pathArg);
+     auto it = gNamedArtCache.find(path);
+     if (it != gNamedArtCache.end()) {
+         it->second->mru = ++gNamedArtCacheMruCounter;
+         return it->second;
+     }
+ 
+-    Art* art = artLoadLocalized(path);
++    Art* art = artLoadLocalized(path.c_str());
+     if (!art) return nullptr;
+ 
+     if (gNamedArtCacheMruCounter == UINT_MAX) {

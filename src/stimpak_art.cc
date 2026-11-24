@@ -74,7 +74,10 @@ namespace {
     bool makeHiresMenuPanel(int* width, int* height, std::vector<unsigned char>* pixels)
     {
         FrmImage image;
-        if (!image.lock(InterfaceFrmId("HR_MENU_BG.FRM")) || !copyImage(image, width, height, pixels)) {
+        // A full path, not InterfaceFrmId("..."): locking by name formats the path
+        // into the engine's shared name buffer, which the caller of this
+        // generator may still be using.
+        if (!image.lock("art\\intrface\\HR_MENU_BG.FRM") || !copyImage(image, width, height, pixels)) {
             return false;
         }
 

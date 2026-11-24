@@ -1,0 +1,5 @@
+# The high-resolution main menu (run with a 2560x1200 screen at scale 2).
+until mainmenu 20000
+wait 1000
+shot menu
+quit 0

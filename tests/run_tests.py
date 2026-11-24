@@ -29,6 +29,8 @@ import shutil
 import subprocess
 import sys
 import time
+import struct
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -194,6 +196,52 @@ def stable(state, volatile_gvars=()):
     }
 
 
+def read_png(path):
+    """Pixels of an 8-bit RGB, RGBA or palette PNG as rows of (r, g, b) tuples
+    (the test mode's screenshots); standard library only."""
+    data = Path(path).read_bytes()
+    pos, idat, palette = 8, b"", None
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        chunk = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            width, height, depth, colour = struct.unpack(">IIBB", chunk[:10])
+        elif kind == b"PLTE":
+            palette = [tuple(chunk[i:i + 3]) for i in range(0, len(chunk), 3)]
+        elif kind == b"IDAT":
+            idat += chunk
+        pos += 12 + length
+    if depth != 8 or colour not in (2, 3, 6):
+        raise TestFailure(f"{path}: unsupported PNG (depth {depth}, colour type {colour})")
+    bpp = {2: 3, 3: 1, 6: 4}[colour]
+    raw = zlib.decompress(idat)
+    stride = width * bpp
+    rows, previous = [], bytearray(stride)
+    for y in range(height):
+        kind = raw[y * (stride + 1)]
+        line = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            left = line[i - bpp] if i >= bpp else 0
+            up = previous[i]
+            corner = previous[i - bpp] if i >= bpp else 0
+            if kind == 1:
+                line[i] = (line[i] + left) & 0xFF
+            elif kind == 2:
+                line[i] = (line[i] + up) & 0xFF
+            elif kind == 3:
+                line[i] = (line[i] + (left + up) // 2) & 0xFF
+            elif kind == 4:
+                p = left + up - corner
+                pa, pb, pc = abs(p - left), abs(p - up), abs(p - corner)
+                line[i] = (line[i] + (left if pa <= pb and pa <= pc else up if pb <= pc else corner)) & 0xFF
+        previous = line
+        if colour == 3:
+            rows.append([palette[v] for v in line])
+        else:
+            rows.append([tuple(line[i:i + 3]) for i in range(0, stride, bpp)])
+    return rows
+
+
 def expect(condition, message):
     if not condition:
         raise TestFailure(message)
@@ -231,6 +279,31 @@ def test_menu(runner):
     out = runner.run("menu", "menu.txt")
     expect((out / "menu.png").is_file(), "no screenshot")
     return "devout/menu/menu.png"
+
+
+def test_menu_hires(runner):
+    """The high-resolution main menu (2560x1200) has seven button plates: the
+    seventh is a copy of the sixth, so their plain right-hand ends match."""
+    out = runner.run("menu_hires", "menu_hires.txt",
+                     ["[screen]resolution_x=2560", "[screen]resolution_y=1200", "[screen]scale=2"])
+    rows = read_png(out / "menu.png")
+    # Builds with high-resolution graphics mods save shots at a multiple of
+    # the 1280x600 screen; compare at the screen's pixels, allowing small
+    # colour differences (upscaled art).
+    scale = max(1, len(rows[0]) // 1280)
+    def pixel(x, y):
+        return rows[y * scale][x * scale]
+    def close(a, b):
+        return sum(abs(p - q) for p, q in zip(a, b)) <= 36
+    # The panel's right-hand end, left of the plates' edge, without labels:
+    # find a plate band there, then the same band one plate pitch lower.
+    best = 0.0
+    for top in range(200, 260):
+        for shift in range(30, 60):
+            same = sum(close(pixel(x, y), pixel(x, y + shift)) for y in range(top, top + 20) for x in range(315, 338))
+            best = max(best, same / (20 * 23))
+    expect(best > 0.9, f"no seventh plate under the sixth (best match {best:.0%})")
+    return f"seventh plate matches the sixth ({best:.0%})"
 
 
 def test_save_unchanged(runner):
@@ -359,6 +432,7 @@ def test_creation_screen(runner):
 TESTS = [
     test_new_game,
     test_menu,
+    test_menu_hires,
     test_save_unchanged,
     test_cancel,
     test_edit_player,
