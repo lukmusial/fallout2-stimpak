@@ -1,4 +1,4 @@
-# Stimpack on slot 2 -> hub -> Save As (first empty slot) -> main menu.
+# Stimpak on slot 2 -> hub -> Save As (first empty slot) -> main menu.
 until mainmenu 20000
 wait 300
 key s
@@ -7,7 +7,7 @@ shot load_screen
 key home
 key down
 key enter
-until stimpack 30000
+until stimpak 30000
 wait 800
 shot hub
 key s
@@ -15,7 +15,7 @@ wait 1200
 shot save_screen
 key enter
 until input 10000
-text stimpack unchanged again
+text stimpak unchanged again
 key enter
 until mainmenu 30000
 wait 500

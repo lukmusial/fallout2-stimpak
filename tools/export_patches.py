@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Maintainers: exports Stimpack from a development checkout of the engine.
+"""Maintainers: exports Stimpak from a development checkout of the engine.
 
 A development checkout is the engine at the pinned commit (see engine-version.txt) with
-Stimpack applied and edited in place (tools/dev_checkout.py makes one). This
+Stimpak applied and edited in place (tools/dev_checkout.py makes one). This
 script turns it back into this repository's form:
 
-  - files the checkout adds under src/  -> src/ here (Stimpack's own sources)
+  - files the checkout adds under src/  -> src/ here (Stimpak's own sources)
   - engine files it changes under src/  -> patches/src/<file>.patch
   - data/                               -> data/ here
 
   export_patches.py <checkout> [--base <commit>]
 
 Only committed and working-tree changes under src/ and data/ are exported;
-CMakeLists.txt changes are not (cmake/Stimpack.cmake adds the sources).
+CMakeLists.txt changes are not (cmake/Stimpak.cmake adds the sources).
 """
 
 import argparse
@@ -20,7 +20,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-STIMPACK_DIR = Path(__file__).resolve().parent.parent
+STIMPAK_DIR = Path(__file__).resolve().parent.parent
 
 
 def git(checkout, *args):
@@ -28,7 +28,7 @@ def git(checkout, *args):
 
 
 def pinned_commit():
-    for line in (STIMPACK_DIR / "engine-version.txt").read_text().splitlines():
+    for line in (STIMPAK_DIR / "engine-version.txt").read_text().splitlines():
         if line.startswith("commit="):
             return line.split("=", 1)[1].strip()
     raise SystemExit("engine-version.txt has no commit= line")
@@ -51,13 +51,13 @@ def main():
         elif kind == "M":
             modified.append(path)
         else:
-            raise SystemExit(f"unsupported change {kind} {path}: Stimpack only adds and patches files")
+            raise SystemExit(f"unsupported change {kind} {path}: Stimpak only adds and patches files")
 
     for directory in ("src", "patches", "data"):
-        shutil.rmtree(STIMPACK_DIR / directory, ignore_errors=True)
+        shutil.rmtree(STIMPAK_DIR / directory, ignore_errors=True)
 
     for path in added:
-        target = STIMPACK_DIR / path
+        target = STIMPAK_DIR / path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(checkout / path, target)
 
@@ -65,9 +65,9 @@ def main():
         if not path.startswith("src/"):
             raise SystemExit(f"{path}: only engine sources under src/ can be patched")
         diff = git(checkout, "diff", "--no-color", "--no-ext-diff", "-U3", base, "--", path)
-        target = STIMPACK_DIR / "patches" / (path + ".patch")
+        target = STIMPAK_DIR / "patches" / (path + ".patch")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(f"Stimpack patch for {path} (engine commit {base[:12]}).\n\n" + diff)
+        target.write_text(f"Stimpak patch for {path} (engine commit {base[:12]}).\n\n" + diff)
 
     print(f"exported {len(added)} own file(s) and {len(modified)} patch(es) from {checkout}")
 

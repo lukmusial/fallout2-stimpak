@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Builds the patched engine source tree that Stimpack is compiled from.
+"""Builds the patched engine source tree that Stimpak is compiled from.
 
 The engine checkout is never modified. Its `src/` is mirrored into
 `<out>/src/`; files named by a patch in `patches/` get that patch applied, and
-Stimpack's own files from `src/` are added. Files are written only when their
+Stimpak's own files from `src/` are added. Files are written only when their
 content changes, so incremental builds recompile only what changed.
 
 Unpatched files start with a `#line` directive naming the original file, so
 compiler messages and debuggers point at the engine checkout, not the copy.
 
-  stimpack_tree.py --engine <engine root> --out <dir>
-  stimpack_tree.py --engine <engine root> --out <dir> --list
-  stimpack_tree.py --engine <engine root> --check
+  stimpak_tree.py --engine <engine root> --out <dir>
+  stimpak_tree.py --engine <engine root> --out <dir> --list
+  stimpak_tree.py --engine <engine root> --check
 
   --list   print the files of the tree (one per line) and exit
   --check  build the tree in a temporary directory only (do the patches apply?)
@@ -20,13 +20,13 @@ Patches are applied with `git apply` (exact) and, if that fails, with
 `patch -F3` (tolerates nearby changes, as in a fork that edits the same files).
 
 A fork whose own changes are interwoven with a patch can carry that file with
-the patch already merged. It lists the file in `stimpack-merged.txt` at its
+the patch already merged. It lists the file in `stimpak-merged.txt` at its
 root, with the hash of the patch it merged (`--patch-hash <file>` prints it):
 
-  # file                    Stimpack patch hash
+  # file                    Stimpak patch hash
   src/character_editor.cc   1f2e3d4c5b6a7980
 
-The file is then used as it is. When a new Stimpack version changes that
+The file is then used as it is. When a new Stimpak version changes that
 patch, the hash no longer matches and the build stops until the fork has
 merged the new patch and updated the hash.
 """
@@ -40,9 +40,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-STIMPACK_DIR = Path(__file__).resolve().parent.parent
-PATCH_DIR = STIMPACK_DIR / "patches"
-OWN_SRC_DIR = STIMPACK_DIR / "src"
+STIMPAK_DIR = Path(__file__).resolve().parent.parent
+PATCH_DIR = STIMPAK_DIR / "patches"
+OWN_SRC_DIR = STIMPAK_DIR / "src"
 SOURCE_SUFFIXES = {".c", ".cc", ".cpp", ".h", ".hpp"}
 
 
@@ -55,7 +55,7 @@ def patch_targets():
     return targets
 
 
-MERGED_LIST = "stimpack-merged.txt"
+MERGED_LIST = "stimpak-merged.txt"
 
 
 def patch_hash(patch: Path) -> str:
@@ -63,7 +63,7 @@ def patch_hash(patch: Path) -> str:
 
 
 def merged_files(engine: Path, targets):
-    """Files the engine checkout carries with Stimpack's patch merged in."""
+    """Files the engine checkout carries with Stimpak's patch merged in."""
     listing = engine / MERGED_LIST
     merged = {}
     if not listing.is_file():
@@ -77,11 +77,11 @@ def merged_files(engine: Path, targets):
             raise SystemExit(f"{listing}:{number}: expected '<file> <patch hash>'")
         relative, recorded = parts
         if relative not in targets:
-            raise SystemExit(f"{listing}:{number}: Stimpack has no patch for {relative}")
+            raise SystemExit(f"{listing}:{number}: Stimpak has no patch for {relative}")
         current = patch_hash(targets[relative])
         if recorded != current:
             raise SystemExit(
-                f"stimpack: {targets[relative].relative_to(STIMPACK_DIR)} changed since {relative} merged it "
+                f"stimpak: {targets[relative].relative_to(STIMPAK_DIR)} changed since {relative} merged it "
                 f"(merged {recorded}, now {current}).\n"
                 f"Merge the new patch into {engine / relative} and set its hash in {listing} to {current}.")
         merged[relative] = current
@@ -89,14 +89,14 @@ def merged_files(engine: Path, targets):
 
 
 def own_files():
-    """Stimpack's own sources, keyed by their path in the tree (src/...)."""
+    """Stimpak's own sources, keyed by their path in the tree (src/...)."""
     return {"src/" + p.relative_to(OWN_SRC_DIR).as_posix(): p
             for p in sorted(OWN_SRC_DIR.rglob("*")) if p.is_file()}
 
 
 def apply_patch(original: Path, patch: Path, relative: str) -> bytes:
     """Returns the patched content of `original`; exits with the rejects on failure."""
-    with tempfile.TemporaryDirectory(prefix="stimpack-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="stimpak-") as tmp:
         work = Path(tmp) / relative
         work.parent.mkdir(parents=True)
         shutil.copyfile(original, work)
@@ -113,11 +113,11 @@ def apply_patch(original: Path, patch: Path, relative: str) -> bytes:
             ["patch", "-p1", "-F3", "-N", "-s", "-r", str(rejects), "-i", str(patch)],
             cwd=tmp, capture_output=True, text=True)
         if fuzzy.returncode == 0:
-            print(f"stimpack: {relative}: patch applied with fuzz", file=sys.stderr)
+            print(f"stimpak: {relative}: patch applied with fuzz", file=sys.stderr)
             return work.read_bytes()
 
         details = rejects.read_text(errors="replace") if rejects.exists() else fuzzy.stdout + fuzzy.stderr
-        raise SystemExit(f"stimpack: cannot apply {patch.relative_to(STIMPACK_DIR)} to {original}\n{details}")
+        raise SystemExit(f"stimpak: cannot apply {patch.relative_to(STIMPAK_DIR)} to {original}\n{details}")
 
 
 def with_line_directive(content: bytes, origin: Path) -> bytes:
@@ -129,7 +129,7 @@ def desired_tree(engine: Path):
     """Yields (relative path, content) for every file of the tree."""
     src = engine / "src"
     if not src.is_dir():
-        raise SystemExit(f"stimpack: {src} not found (expected an engine checkout)")
+        raise SystemExit(f"stimpak: {src} not found (expected an engine checkout)")
 
     targets = patch_targets()
     own = own_files()
@@ -137,14 +137,14 @@ def desired_tree(engine: Path):
 
     for relative in targets:
         if not (engine / relative).is_file():
-            raise SystemExit(f"stimpack: patch target {relative} not found in {engine}")
+            raise SystemExit(f"stimpak: patch target {relative} not found in {engine}")
 
     for path in sorted(src.rglob("*")):
         if not path.is_file():
             continue
         relative = path.relative_to(engine).as_posix()
         if relative in own:
-            raise SystemExit(f"stimpack: {relative} exists in the engine and in Stimpack's src/")
+            raise SystemExit(f"stimpak: {relative} exists in the engine and in Stimpak's src/")
         if relative in targets and relative not in merged:
             yield relative, apply_patch(path, targets[relative], relative)
         elif path.suffix in SOURCE_SUFFIXES:
@@ -184,7 +184,7 @@ def write_tree(engine: Path, out: Path):
                 path.rmdir()
 
     if written or removed:
-        print(f"stimpack: {written} file(s) updated, {removed} removed in {out}")
+        print(f"stimpak: {written} file(s) updated, {removed} removed in {out}")
 
 
 def main():
@@ -193,23 +193,23 @@ def main():
     parser.add_argument("--out", type=Path)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--patch-hash", metavar="FILE", help="print the hash of Stimpack's patch for FILE (src/...)")
+    parser.add_argument("--patch-hash", metavar="FILE", help="print the hash of Stimpak's patch for FILE (src/...)")
     args = parser.parse_args()
     engine = args.engine.resolve()
 
     if args.patch_hash:
         targets = patch_targets()
         if args.patch_hash not in targets:
-            raise SystemExit(f"Stimpack has no patch for {args.patch_hash}")
+            raise SystemExit(f"Stimpak has no patch for {args.patch_hash}")
         print(patch_hash(targets[args.patch_hash]))
         return
 
     if args.check:
-        with tempfile.TemporaryDirectory(prefix="stimpack-check-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="stimpak-check-") as tmp:
             write_tree(engine, Path(tmp))
         merged = merged_files(engine, patch_targets())
         note = f" ({len(merged)} merged in the checkout)" if merged else ""
-        print(f"stimpack: all {len(patch_targets())} patches apply to {engine}{note}")
+        print(f"stimpak: all {len(patch_targets())} patches apply to {engine}{note}")
         return
 
     if args.out is None:

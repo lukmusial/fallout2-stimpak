@@ -1,4 +1,4 @@
-Stimpack patch for src/sfall_arrays.cc (engine commit c30f1efce64b).
+Stimpak patch for src/sfall_arrays.cc (engine commit c30f1efce64b).
 
 diff --git a/src/sfall_arrays.cc b/src/sfall_arrays.cc
 index da57b3d7..3cf639e3 100644

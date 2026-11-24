@@ -1,4 +1,4 @@
-Stimpack patch for src/dbox.cc (engine commit c30f1efce64b).
+Stimpak patch for src/dbox.cc (engine commit c30f1efce64b).
 
 diff --git a/src/dbox.cc b/src/dbox.cc
 index 48d80552..81d21d4a 100644

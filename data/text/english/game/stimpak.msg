@@ -1,6 +1,6 @@
-# Stimpack savegame editor
+# Stimpak savegame editor
 
-{100}{}{STIMPACK}
+{100}{}{STIMPAK}
 {101}{}{CHARACTER}
 {102}{}{COMPANIONS}
 {103}{}{ROSTER}
@@ -8,6 +8,7 @@
 {105}{}{LOCATION}
 {106}{}{SAVE AS}
 {107}{}{EXIT}
+{108}{}{PLAY}
 
 {110}{}{This game was saved during combat and cannot be edited.}
 {111}{}{Leave without saving your changes?}

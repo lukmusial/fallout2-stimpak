@@ -16,7 +16,7 @@ namespace fallout {
 // Script format: one command per line, `#` starts a comment.
 //   wait <ms>                 pause
 //   until <state> [<ms>]      wait until the engine reports a state (mainmenu,
-//                             game, stimpack, input = a text input dialog is open),
+//                             game, stimpak, input = a text input dialog is open),
 //                             fail after timeout (default 30000)
 //   key <name|char|code> [n]  send a key (n times, one per input poll) (esc, enter, space, tab, backspace,
 //                             up, down, left, right, home, end, pageup, pagedown, f1..f12)
