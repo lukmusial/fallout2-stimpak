@@ -1,7 +1,7 @@
 Stimpack patch for src/input.cc (engine commit c30f1efce64b).
 
 diff --git a/src/input.cc b/src/input.cc
-index baaf5395..8878dfde 100644
+index baaf5395..70822947 100644
 --- a/src/input.cc
 +++ b/src/input.cc
 @@ -7,6 +7,7 @@
@@ -21,81 +21,7 @@ index baaf5395..8878dfde 100644
      tickersExecute();
  
      _mouse_info();
-@@ -384,13 +387,14 @@ void tickersDisable()
- }
- 
- // 0x4C8F4C
--void takeScreenshot()
-+// Renders every window into a newly allocated `gScreenshotBuffer`.
-+static bool screenshotCapture(int* widthPtr, int* heightPtr)
- {
-     int width = _scr_size.right - _scr_size.left + 1;
-     int height = _scr_size.bottom - _scr_size.top + 1;
-     gScreenshotBuffer = (unsigned char*)internal_malloc(static_cast<size_t>(width) * height);
-     if (gScreenshotBuffer == nullptr) {
--        return;
-+        return false;
-     }
- 
-     WINDOWDRAWINGPROC old_src = _scr_blit;
-@@ -408,11 +412,52 @@ void takeScreenshot()
-     _mouse_blit = old_mouse;
-     _scr_blit = old_src;
- 
--    // Save screenshots with the palette currently presented on screen so the
--    // exported colors match brightness-adjusted rendering.
--    unsigned char* palette = gSdlSurface != nullptr ? directDrawGetPalette() : _getSystemPalette();
--    gScreenshotHandler(width, height, gScreenshotBuffer, palette);
-+    *widthPtr = width;
-+    *heightPtr = height;
-+    return true;
-+}
-+
-+// Save screenshots with the palette currently presented on screen so the
-+// exported colors match brightness-adjusted rendering.
-+static unsigned char* screenshotPalette()
-+{
-+    return gSdlSurface != nullptr ? directDrawGetPalette() : _getSystemPalette();
-+}
-+
-+void takeScreenshot()
-+{
-+    int width;
-+    int height;
-+    if (!screenshotCapture(&width, &height)) {
-+        return;
-+    }
-+
-+    gScreenshotHandler(width, height, gScreenshotBuffer, screenshotPalette());
-     internal_free(gScreenshotBuffer);
-+    gScreenshotBuffer = nullptr;
-+}
-+
-+bool screenshotSavePng(const char* path)
-+{
-+    int width;
-+    int height;
-+    if (!screenshotCapture(&width, &height)) {
-+        return false;
-+    }
-+
-+    unsigned char* palette = screenshotPalette();
-+    size_t pixelCount = static_cast<size_t>(width) * height;
-+    std::vector<unsigned char> image(pixelCount * 3);
-+    for (size_t i = 0; i < pixelCount; i++) {
-+        unsigned char* entry = palette + gScreenshotBuffer[i] * 3;
-+        image[i * 3] = entry[0] << 2;
-+        image[i * 3 + 1] = entry[1] << 2;
-+        image[i * 3 + 2] = entry[2] << 2;
-+    }
-+    internal_free(gScreenshotBuffer);
-+    gScreenshotBuffer = nullptr;
-+
-+    return lodepng::encode(path, image, width, height, LCT_RGB, 8) == 0;
- }
- 
- // 0x4C8FF0
-@@ -1008,6 +1053,24 @@ void _GNW95_process_message()
+@@ -1008,6 +1011,24 @@ void _GNW95_process_message()
      KeyboardData keyboardData;
      SDL_Event e;
      while (SDL_PollEvent(&e)) {
@@ -120,7 +46,7 @@ index baaf5395..8878dfde 100644
          switch (e.type) {
          case SDL_MOUSEMOTION:
          case SDL_MOUSEBUTTONDOWN:
-@@ -1064,6 +1127,10 @@ void _GNW95_process_message()
+@@ -1064,6 +1085,10 @@ void _GNW95_process_message()
                  audioEngineResume();
                  break;
              case SDL_WINDOWEVENT_FOCUS_LOST:

@@ -28,12 +28,31 @@ for the target, and `STIMPACK_VERSION` holds the version string.
 The patches are applied exactly when possible, otherwise with a fuzz of three
 lines, which absorbs most nearby changes a fork makes. If a fork changes the very
 lines a patch touches, configuring fails and prints the rejected hunk. Then either
-move the fork's change a few lines away from Stimpack's hook, or carry the hook in
-the fork in a form the patch still finds. `python3 external/stimpack/tools/stimpack_tree.py
---engine . --check` tests this without building.
+move the fork's change a few lines away from Stimpack's hook, or merge the patch
+into the fork's file yourself (next section).
+`python3 external/stimpack/tools/stimpack_tree.py --engine . --check` tests this
+without building.
 
 Stimpack's own files (`src/stimpack*.cc`, `src/dev_automation.*`) must not exist in
 the project's `src/`.
+
+### Files that carry the patch merged in
+
+Where a fork's own changes are interwoven with a patch (for example a fork that
+redraws the character screen, which Stimpack's editor mode also changes), the fork
+can keep that file with Stimpack's patch already merged into it. It lists the file
+in `stimpack-merged.txt` at its root, with the hash of the patch it merged:
+
+```
+# file                    Stimpack patch hash
+src/character_editor.cc   5244acd3691b6fb1
+```
+
+`tools/stimpack_tree.py --engine . --patch-hash src/character_editor.cc` prints
+the hash. The build then uses the fork's file as it is. When a newer Stimpack
+changes that patch, the hash no longer matches and configuring stops with a
+message naming the file: merge the new patch (`git diff` between the two Stimpack
+versions of `patches/src/<file>.patch` shows what changed) and update the hash.
 
 ## Hooks for other mods
 

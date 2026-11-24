@@ -18,9 +18,21 @@ compiler messages and debuggers point at the engine checkout, not the copy.
 
 Patches are applied with `git apply` (exact) and, if that fails, with
 `patch -F3` (tolerates nearby changes, as in a fork that edits the same files).
+
+A fork whose own changes are interwoven with a patch can carry that file with
+the patch already merged. It lists the file in `stimpack-merged.txt` at its
+root, with the hash of the patch it merged (`--patch-hash <file>` prints it):
+
+  # file                    Stimpack patch hash
+  src/character_editor.cc   1f2e3d4c5b6a7980
+
+The file is then used as it is. When a new Stimpack version changes that
+patch, the hash no longer matches and the build stops until the fork has
+merged the new patch and updated the hash.
 """
 
 import argparse
+import hashlib
 import os
 import shutil
 import subprocess
@@ -41,6 +53,39 @@ def patch_targets():
         relative = patch.relative_to(PATCH_DIR).as_posix()[: -len(".patch")]
         targets[relative] = patch
     return targets
+
+
+MERGED_LIST = "stimpack-merged.txt"
+
+
+def patch_hash(patch: Path) -> str:
+    return hashlib.sha256(patch.read_bytes().replace(b"\r\n", b"\n")).hexdigest()[:16]
+
+
+def merged_files(engine: Path, targets):
+    """Files the engine checkout carries with Stimpack's patch merged in."""
+    listing = engine / MERGED_LIST
+    merged = {}
+    if not listing.is_file():
+        return merged
+    for number, line in enumerate(listing.read_text().splitlines(), 1):
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 2:
+            raise SystemExit(f"{listing}:{number}: expected '<file> <patch hash>'")
+        relative, recorded = parts
+        if relative not in targets:
+            raise SystemExit(f"{listing}:{number}: Stimpack has no patch for {relative}")
+        current = patch_hash(targets[relative])
+        if recorded != current:
+            raise SystemExit(
+                f"stimpack: {targets[relative].relative_to(STIMPACK_DIR)} changed since {relative} merged it "
+                f"(merged {recorded}, now {current}).\n"
+                f"Merge the new patch into {engine / relative} and set its hash in {listing} to {current}.")
+        merged[relative] = current
+    return merged
 
 
 def own_files():
@@ -88,6 +133,7 @@ def desired_tree(engine: Path):
 
     targets = patch_targets()
     own = own_files()
+    merged = merged_files(engine, targets)
 
     for relative in targets:
         if not (engine / relative).is_file():
@@ -99,7 +145,7 @@ def desired_tree(engine: Path):
         relative = path.relative_to(engine).as_posix()
         if relative in own:
             raise SystemExit(f"stimpack: {relative} exists in the engine and in Stimpack's src/")
-        if relative in targets:
+        if relative in targets and relative not in merged:
             yield relative, apply_patch(path, targets[relative], relative)
         elif path.suffix in SOURCE_SUFFIXES:
             yield relative, with_line_directive(path.read_bytes(), path)
@@ -147,13 +193,23 @@ def main():
     parser.add_argument("--out", type=Path)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--patch-hash", metavar="FILE", help="print the hash of Stimpack's patch for FILE (src/...)")
     args = parser.parse_args()
     engine = args.engine.resolve()
+
+    if args.patch_hash:
+        targets = patch_targets()
+        if args.patch_hash not in targets:
+            raise SystemExit(f"Stimpack has no patch for {args.patch_hash}")
+        print(patch_hash(targets[args.patch_hash]))
+        return
 
     if args.check:
         with tempfile.TemporaryDirectory(prefix="stimpack-check-") as tmp:
             write_tree(engine, Path(tmp))
-        print(f"stimpack: all {len(patch_targets())} patches apply to {engine}")
+        merged = merged_files(engine, patch_targets())
+        note = f" ({len(merged)} merged in the checkout)" if merged else ""
+        print(f"stimpack: all {len(patch_targets())} patches apply to {engine}{note}")
         return
 
     if args.out is None:

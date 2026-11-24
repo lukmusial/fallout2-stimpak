@@ -1,6 +1,7 @@
 #include "dev_automation.h"
 
 #include <SDL.h>
+#include <lodepng.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "color.h"
 #include "critter.h"
 #include "debug.h"
 #include "game.h"
@@ -28,6 +30,7 @@
 #include "stat.h"
 #include "svga.h"
 #include "trait.h"
+#include "window_manager.h"
 #include "win32.h"
 #include "worldmap.h"
 
@@ -75,11 +78,65 @@ namespace {
         // Extensions (see devAutomationRegisterCommand).
         std::vector<std::pair<std::string, DevAutomationCommandHandler>> extensionCommands;
         std::vector<void (*)()> tickers;
-        bool (*shotWriter)(const char* path) = screenshotSavePng;
+        bool (*shotWriter)(const char* path) = nullptr; // nullptr: saveScreenshot
         bool commandStarted = false;
     };
 
     AutomationState gAutomation;
+
+    // Screenshots: every window (and the cursor) is composed into this buffer
+    // through the window manager's blitters, as the game's own screenshot key does.
+    unsigned char* gShotBuffer = nullptr;
+    int gShotPitch = 0;
+
+    void shotBlitter(unsigned char* src, int srcPitch, int, int srcX, int srcY, int width, int height, int destX, int destY)
+    {
+        destX -= _scr_size.left;
+        destY -= _scr_size.top;
+        for (int y = 0; y < height; y++) {
+            memcpy(gShotBuffer + static_cast<size_t>(destY + y) * gShotPitch + destX,
+                src + static_cast<size_t>(srcY + y) * srcPitch + srcX,
+                width);
+        }
+    }
+
+    // Writes the composed screen as an RGB PNG through the system palette.
+    bool saveScreenshot(const char* path)
+    {
+        int width = _scr_size.right - _scr_size.left + 1;
+        int height = _scr_size.bottom - _scr_size.top + 1;
+        std::vector<unsigned char> indices(static_cast<size_t>(width) * height);
+        gShotBuffer = indices.data();
+        gShotPitch = width;
+
+        WINDOWDRAWINGPROC oldScreen = _scr_blit;
+        WINDOWDRAWINGPROC oldMouse = _mouse_blit;
+        WindowDrawingProc2* oldMouseTrans = _mouse_blit_trans;
+        _scr_blit = shotBlitter;
+        _mouse_blit = shotBlitter;
+        _mouse_blit_trans = nullptr;
+        windowRefreshAll(&_scr_size);
+        _mouse_blit_trans = oldMouseTrans;
+        _mouse_blit = oldMouse;
+        _scr_blit = oldScreen;
+        gShotBuffer = nullptr;
+
+        // 6-bit palette entries widened to 8 bits.
+        const unsigned char* palette = _getSystemPalette();
+        std::vector<unsigned char> image(indices.size() * 3);
+        for (size_t i = 0; i < indices.size(); i++) {
+            for (int channel = 0; channel < 3; channel++) {
+                unsigned char value = palette[indices[i] * 3 + channel] & 0x3F;
+                image[i * 3 + channel] = static_cast<unsigned char>((value << 2) | (value >> 4));
+            }
+        }
+        return lodepng::encode(path, image, width, height, LCT_RGB, 8) == 0;
+    }
+
+    bool writeShot(const char* path)
+    {
+        return gAutomation.shotWriter != nullptr ? gAutomation.shotWriter(path) : saveScreenshot(path);
+    }
 
     std::string trim(const std::string& value)
     {
@@ -198,7 +255,7 @@ namespace {
     {
         debugPrint("AUTOMATION: line %d (%s): %s\n", command.line, command.name.c_str(), message);
         fprintf(stderr, "AUTOMATION: line %d (%s): %s\n", command.line, command.name.c_str(), message);
-        gAutomation.shotWriter(outputPath("failure", ".png").c_str());
+        writeShot(outputPath("failure", ".png").c_str());
         exit(2);
     }
 
@@ -434,7 +491,7 @@ namespace {
                 fail(command, "missing name");
             }
             std::string path = outputPath(args[0], ".png");
-            if (!gAutomation.shotWriter(path.c_str())) {
+            if (!writeShot(path.c_str())) {
                 fail(command, "screenshot failed");
             }
             debugPrint("AUTOMATION: wrote %s\n", path.c_str());
@@ -622,7 +679,7 @@ void devAutomationRegisterTicker(void (*ticker)())
 
 void devAutomationSetShotWriter(bool (*writer)(const char* path))
 {
-    gAutomation.shotWriter = writer != nullptr ? writer : screenshotSavePng;
+    gAutomation.shotWriter = writer;
 }
 
 std::string devAutomationOutputPath(const std::string& name, const char* extension)

@@ -62,7 +62,7 @@ void devAutomationRegisterCommand(const char* name, DevAutomationCommandHandler 
 void devAutomationRegisterTicker(void (*ticker)());
 
 // Replaces how `shot` (and the failure screenshot) is written; nullptr restores
-// the default (`screenshotSavePng`).
+// the default (all windows composed through the system palette).
 void devAutomationSetShotWriter(bool (*writer)(const char* path));
 
 // `<out>/<name><extension>`, creating the output directory.

@@ -83,6 +83,9 @@ function(stimpack_attach target)
     # New patches or Stimpack sources change the file lists: reconfigure.
     file(GLOB_RECURSE patches CONFIGURE_DEPENDS "${STIMPACK_DIR}/patches/*.patch")
     set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${patches} "${tool}" "${STIMPACK_DIR}/VERSION")
+    if(EXISTS "${engine_dir}/stimpack-merged.txt")
+        set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${engine_dir}/stimpack-merged.txt")
+    endif()
 
     message(STATUS "Stimpack ${version}: ${target} builds from ${tree_dir}")
 endfunction()
