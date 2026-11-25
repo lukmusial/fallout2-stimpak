@@ -1,10 +1,29 @@
 Stimpak patch for src/party_member.cc (engine commit c30f1efce64b).
 
 diff --git a/src/party_member.cc b/src/party_member.cc
-index 3791fb5b..87c889a0 100644
+index 3791fb5b..7ffcc5cb 100644
 --- a/src/party_member.cc
 +++ b/src/party_member.cc
-@@ -1588,6 +1588,32 @@ int _partyMemberIncLevels()
+@@ -30,6 +30,7 @@
+ #include "scripts.h"
+ #include "skill.h"
+ #include "stat.h"
++#include "stimpak_saves.h"
+ #include "string_parsers.h"
+ #include "text_object.h"
+ #include "tile.h"
+@@ -731,7 +732,9 @@ int partyMembersLoad(File* stream)
+ 
+     partyFixMultipleMembers();
+ 
+-    for (int index = 1; index < gPartyMemberDescriptionsLength; index++) {
++    // STIMPAK: a save of the unmodded game has fewer party members.
++    int levelUpCount = stimpakSavesPartyCount(gPartyMemberDescriptionsLength);
++    for (int index = 1; index < levelUpCount; index++) {
+         PartyMemberLevelUpInfo* levelUpInfo = &(_partyMemberLevelUpInfoList[index]);
+ 
+         if (fileReadInt32(stream, &(levelUpInfo->level)) == -1) return -1;
+@@ -1588,6 +1591,32 @@ int _partyMemberIncLevels()
      return partyMemberIncLevels(nullptr);
  }
  

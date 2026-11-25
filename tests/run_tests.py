@@ -13,7 +13,9 @@ premade character and saves it; every test works from that save (and from
 the saves earlier tests make).
 
 You need your own copy of Fallout 2 (master.dat, critter.dat, patch000.dat).
-The game folder is only read; the tests run in <build>/test-run.
+The game folder is only read; the tests run in <build>/test-run. A folder with
+the Restoration Project (or another mod in mods/ and data/) works too: the
+tests then run with the mod.
 
   tests/run_tests.py --game-dir "~/Games/Fallout 2" [--build-dir build/debug] [-k name] [--list]
 
@@ -36,8 +38,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "tests" / "scripts"
 GAME_TIMEOUT = 180
-GAME_FILES = ("master.dat", "critter.dat", "patch000.dat")
-GAME_DIRS = ("sound",)
+GAME_FILES = ("master.dat", "critter.dat")
+# Linked when the game folder has them: the 1.02 patch (the Restoration
+# Project moves it away), content mods (mods/ with mods_order.txt) and the
+# settings files mods ship.
+OPTIONAL_GAME_FILES = ("patch000.dat", "ddraw.ini", "f2_res.ini")
+GAME_DIRS = ("sound", "mods")
 
 # State dump layout (src/dev_automation.cc).
 ST = 0
@@ -58,6 +64,11 @@ class Runner:
         self.run_dir = build_dir / "test-run"
         self.exe = find_executable(build_dir)
         self.start = None
+        # Slot 1 as the game itself saves it again (mods' scripts may change
+        # it once on load): what an unchanged Stimpak save must equal.
+        self.reference = None
+        old = game_dir / "backup" / "rpu" / "data" / "SAVEGAME"
+        self.old_saves = old if old.is_dir() else None
         self.lists = None
         # Global variables that game scripts change on every load (for example
         # GVAR_DUDE_STOMACH); measured by test_save_unchanged.
@@ -72,13 +83,19 @@ class Runner:
         if self.run_dir.exists():
             shutil.rmtree(self.run_dir)
         self.run_dir.mkdir(parents=True)
-        for name in GAME_FILES + GAME_DIRS:
+        for name in GAME_FILES + OPTIONAL_GAME_FILES + GAME_DIRS:
             if (self.game_dir / name).exists():
                 link(self.game_dir / name, self.run_dir / name)
         engine_files = self.engine_dir() / "files"
         if (engine_files / "f2_res.dat").is_file():
             link(engine_files / "f2_res.dat", self.run_dir / "f2_res.dat")
-        (self.run_dir / "data").mkdir()
+        # Loose game files in data/ (a mod's maps, protos and scripts) are
+        # copied: the game writes there. Saved games are not.
+        if (self.game_dir / "data").is_dir():
+            shutil.copytree(self.game_dir / "data", self.run_dir / "data",
+                            ignore=lambda folder, names: [n for n in names if n.upper() == "SAVEGAME"])
+        else:
+            (self.run_dir / "data").mkdir()
         self.write_config(engine_files / "fallout2.cfg")
 
         if self.app_bundle():
@@ -319,10 +336,18 @@ def test_save_unchanged(runner):
     again = runner.state_of_slot(3, "save_unchanged_again_state")
     runner.volatile_gvars = {i for i, (a, b) in enumerate(zip(saved["gvars"], again["gvars"])) if a != b}
 
-    diff = differences(stable(runner.start, runner.volatile_gvars), stable(saved, runner.volatile_gvars))
+    # The reference: slot 1 loaded and saved by the game without Stimpak.
+    # Scripts may change a variable once on the first load (the Restoration
+    # Project does), which the game's own save keeps as well.
+    runner.run("save_plain", "save_plain.txt", ["--dev-load-game=1"])
+    runner.reference = runner.state_of_slot(4, "save_plain_state")
+    once = differences(stable(runner.start, runner.volatile_gvars), stable(runner.reference, runner.volatile_gvars))
+
+    diff = differences(stable(runner.reference, runner.volatile_gvars), stable(saved, runner.volatile_gvars))
     expect(not diff, f"the unchanged save differs: {diff[:8]}")
     note = f", {len(runner.volatile_gvars)} global(s) change on every load" if runner.volatile_gvars else ""
-    return "slot 2 == slot 1" + note
+    note += f", {len(once)} change(s) on the first load (game scripts)" if once else ""
+    return "slot 2 == slot 1 saved by the game" + note
 
 
 def test_cancel(runner):
@@ -330,7 +355,8 @@ def test_cancel(runner):
     runner.clear_slots_after(1)
     runner.run("cancel", "cancel.txt")
     saved = runner.state_of_slot(2, "cancel_state")
-    diff = differences(stable(runner.start, runner.volatile_gvars), stable(saved, runner.volatile_gvars))
+    reference = runner.reference or runner.start
+    diff = differences(stable(reference, runner.volatile_gvars), stable(saved, runner.volatile_gvars))
     expect(not diff, f"cancelled edits were saved: {diff[:8]}")
     return "no changes"
 
@@ -423,6 +449,26 @@ def test_game_screens(runner):
     return "character screen, Pip-Boy"
 
 
+def test_old_saves(runner):
+    """Saves of the unmodded game load on a game with more global variables
+    and party members (the Restoration Project): --old-saves, or the saves
+    RPU's installer moved to backup/rpu/data/SAVEGAME."""
+    if not runner.old_saves:
+        return "skipped: no old saves (--old-saves)"
+    slots = sorted(p for p in runner.old_saves.iterdir() if p.is_dir() and p.name.upper().startswith("SLOT"))[:10]
+    runner.clear_slots_after(1)
+    loaded = []
+    for index, source in enumerate(slots):
+        slot = 41 + index
+        shutil.copytree(source, runner.slot_dir(slot))
+        state = runner.state_of_slot(slot, f"old_save_{source.name}")
+        expect(state["loaded"], f"{source.name} does not load")
+        expect(len(state["gvars"]) == len(runner.start["gvars"]),
+               f"{source.name}: {len(state['gvars'])} global variables, the game has {len(runner.start['gvars'])}")
+        loaded.append(state["world"]["map_name"])
+    return f"{len(loaded)} loaded: {', '.join(loaded)}"
+
+
 def test_creation_screen(runner):
     """The game's own character creation screen still opens."""
     runner.run("creation_screen", "creation_screen.txt")
@@ -442,6 +488,7 @@ TESTS = [
     test_perk_scan,
     test_game_screens,
     test_creation_screen,
+    test_old_saves,
 ]
 
 
@@ -449,6 +496,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--game-dir", default=os.environ.get("FALLOUT2_GAME_DIR"))
     parser.add_argument("--build-dir", default=os.environ.get("STIMPAK_BUILD_DIR", str(ROOT / "build" / "debug")))
+    parser.add_argument("--old-saves", help="a SAVEGAME folder of saves made without the mods the game has "
+                        "(default: <game dir>/backup/rpu/data/SAVEGAME)")
     parser.add_argument("-k", dest="filter", help="run only tests whose name contains this (plus what they need)")
     parser.add_argument("--list", action="store_true")
     args = parser.parse_args()
@@ -461,6 +510,8 @@ def main():
         parser.error("--game-dir (or FALLOUT2_GAME_DIR) is required: your Fallout 2 folder")
 
     runner = Runner(Path(args.build_dir).resolve(), Path(args.game_dir).expanduser().resolve())
+    if args.old_saves:
+        runner.old_saves = Path(args.old_saves).expanduser().resolve()
     runner.prepare()
 
     selected = [t for t in TESTS if t is test_new_game or not args.filter or args.filter in t.__name__]

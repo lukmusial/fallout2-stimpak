@@ -64,6 +64,11 @@ tests/run_tests.py --list                               # what is tested
 tests/run_tests.py --game-dir ... -k companion          # some of them
 ```
 
+The game folder may have the Restoration Project (or another mod in `mods/`
+and `data/`) installed; the tests then run with it. `test_old_saves` loads
+saves made without the mod: `--old-saves <SAVEGAME folder>`, or by default the
+saves RPU's installer moved to `<game dir>/backup/rpu/data/SAVEGAME`.
+
 The game runs hidden and silent (it does not take keyboard focus), one run per
 script. The run directory is `<build>/test-run`; it links the game data, keeps
 its own `data/` for saves and settings, and holds the screenshots of every run in
