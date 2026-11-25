@@ -18,6 +18,8 @@ One package for the unmodded game and the Fallout 2 Restoration Project (RPU).
   saves made without the mod; an unchanged save is compared with the game's
   own re-save (RPU's scripts change a variable on the first load).
 * INSTALL.md: installing on RPU, and where RPU's installer moves your saves.
+* Location: the TRAVEL button sits inside the card, right-aligned, instead of
+  on the card's lower edge where its label was cut off.
 
 ## 1.0.2
 
