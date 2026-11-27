@@ -83,7 +83,7 @@ key k
 key +
 wait 400
 shot 08_location
-click 460 316
+click 503 301
 wait 800
 key enter
 until stimpak 30000

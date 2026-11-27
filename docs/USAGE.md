@@ -6,6 +6,10 @@ Choose **STIMPAK** in the main menu (hotkey **S**). The game's load screen opens
 pick a saved game as you would to play it. The game is loaded, but nothing moves:
 game time is stopped and no scripts run while you edit.
 
+A saved game from before the Restoration Project (or another mod with more
+global variables and companions) was installed opens too: its missing parts
+start as in a new game, and **SAVE AS** writes it as a save of the modded game.
+
 A game saved during combat cannot be edited (Stimpak says so and returns to the
 main menu): saving it again without finishing the fight would keep a
 half-restored combat in the save.

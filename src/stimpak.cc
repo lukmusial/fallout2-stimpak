@@ -472,11 +472,17 @@ namespace {
         fontDrawText(buffer + kListWidth * 186 + 69, stimpakGetMessage(STIMPAK_MSG_DONE, "DONE"), kListWidth, kListWidth, COLOR_DARK_YELLOW);
         fontDrawText(buffer + kListWidth * 186 + 177, screen.valueLabel, kListWidth, kListWidth, COLOR_DARK_YELLOW);
 
-        // Optional action: a red button with its label at the foot of the card.
-        constexpr int kActionX = 420;
-        constexpr int kActionY = 186;
+        // Optional action: a red button with its label at the foot of the
+        // card, right-aligned and clear of the parchment's lower edge.
+        constexpr int kActionBottom = 186;
+        int actionX = 0;
+        int actionY = kActionBottom - redUp.getHeight();
+        int actionLabelY = actionY;
         if (screen.actionLabel != nullptr) {
-            button(kActionX, kActionY, redUp, redDown, CODE_ACTION);
+            fontSetCurrent(103);
+            actionX = kCardX + kCardWidth - fontGetStringWidth(screen.actionLabel) - 4 - redUp.getWidth();
+            actionLabelY = actionY + (redUp.getHeight() - fontGetLineHeight()) / 2;
+            button(actionX, actionY, redUp, redDown, CODE_ACTION);
         }
 
         fontSetCurrent(101);
@@ -574,7 +580,7 @@ namespace {
 
             if (screen.actionLabel != nullptr) {
                 fontSetCurrent(103);
-                fontDrawText(buffer + kListWidth * (kActionY + 1) + kActionX + redUp.getWidth() + 4, screen.actionLabel, kListWidth, kListWidth, COLOR_BLACK);
+                fontDrawText(buffer + kListWidth * actionLabelY + actionX + redUp.getWidth() + 4, screen.actionLabel, kListWidth, kListWidth, COLOR_BLACK);
             }
 
             windowRefresh(window);

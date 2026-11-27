@@ -1,0 +1,14 @@
+# Load a game (--dev-load-game) and save it unchanged with the game's own
+# save screen (F4) to slot 4: what the game itself makes of the save.
+until game 60000
+wait 2000
+key f4
+wait 1500
+key home
+key down 3
+key enter
+until input 10000
+text plain
+key enter
+wait 2500
+quit 0

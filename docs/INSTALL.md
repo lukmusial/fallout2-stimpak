@@ -56,6 +56,25 @@ it, and you can switch back at any time. Saved games work in both.
 3. Run `./fallout2-ce` from that folder. SDL2 is built into the game; it
    needs a 64-bit x86 distribution with glibc 2.35 or later.
 
+## Restoration Project
+
+Stimpak works on a game with the
+[Fallout 2 Restoration Project](https://github.com/BGforgeNet/Fallout2_Restoration_Project)
+(RPU) installed; nothing to choose or set. Install RPU first as its
+instructions say, then copy Stimpak into the same folder as above. CE takes the
+place of RPU's `fallout2.exe` and sfall: it loads RPU's `mods/*.dat` in the
+order of `mods/mods_order.txt` and reads `ddraw.ini`.
+
+Saved games from before RPU was installed load as they are: Stimpak sees that
+a save holds the unmodded game's lists and reads it with RPU's new global
+variables and companions at their starting values. Saving such a game writes an
+ordinary RPU save. On macOS, RPU's `rpu-install.command` moves `data/SAVEGAME`
+to `backup/rpu/data/SAVEGAME`; copy the slot folders back to `data/SAVEGAME` to
+see them in the game.
+
+RPU recommends a new game: places you have already visited keep their state
+from your save, so RPU's changes there show only in places you have not been to.
+
 ## Settings
 
 Stimpak has no settings of its own. All of CE's settings in `fallout2.cfg` (and

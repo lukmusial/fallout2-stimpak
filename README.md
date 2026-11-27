@@ -6,7 +6,7 @@ character, your companions, the party, quests or where you are, then save the
 result as a new saved game in a slot you choose, or play on with it straight
 away.
 
-Stimpak 1.0.1 is built on [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce)
+Stimpak 1.1.0 is built on [Fallout 2 Community Edition](https://github.com/fallout2-ce/fallout2-ce)
 at commit [`c30f1efc`](https://github.com/fallout2-ce/fallout2-ce/commit/c30f1efce64b96696c150603cc6dfce5d74645cc)
 (20 November 2026; v1.3.0 + 1573 commits, the code of CE's
 [Continuous Build](https://github.com/fallout2-ce/fallout2-ce/releases/tag/continious)
@@ -79,6 +79,24 @@ with Stimpak.
 Your saved games stay where they are. They are compatible both ways with Fallout 2
 Community Edition: Stimpak only adds the editor and writes ordinary saves.
 
+### With the Restoration Project
+
+The same package works on the unmodded game and on the
+[Fallout 2 Restoration Project](https://github.com/BGforgeNet/Fallout2_Restoration_Project)
+(RPU). Stimpak reads the game's own lists (quests, towns, companions, global
+variables), so on RPU every screen shows RPU's: its quests, its 61 towns, its
+companions. Install it into the RPU folder as above; CE loads RPU's
+`mods/*.dat` in RPU's order (`mods/mods_order.txt`).
+
+Stimpak also tells which game a saved game was made for. A save from before
+RPU was installed (the unmodded game has 696 global variables and 26 party
+members, RPU 791 and 29) is read with RPU's additions at their starting
+values, from **STIMPAK** and from **LOAD GAME** alike; the game says so when
+it loads. Save it (in the game or with **SAVE AS**) and the new save is an
+ordinary RPU save. Maps you have already visited keep their state from the
+save, so RPU's changes to them show only in maps you have not visited yet.
+See [docs/INSTALL.md](docs/INSTALL.md#restoration-project).
+
 ## Using it
 
 1. Start the game and choose **STIMPAK** in the main menu (or press **S**).
@@ -131,10 +149,12 @@ Stimpak is a layer on top of an unmodified Fallout 2 Community Edition source tr
   commit in `engine-version.txt`.
 * `src/` holds Stimpak's own code: the editor and its screens (`stimpak.cc`), the
   menu art it builds at run time from the player's own game images
-  (`stimpak_art.cc`), and a scripted test mode (`dev_automation.cc`).
+  (`stimpak_art.cc`), reading saves made before a mod was installed
+  (`stimpak_saves.cc`), and a scripted test mode (`dev_automation.cc`).
 * `patches/src/<file>.patch` holds one small patch per engine file Stimpak hooks
   into: the main-menu button, the editor mode of the game's character screen,
-  accessors for quests, towns and companions, and the test-mode hooks.
+  accessors for quests, towns and companions, the load functions that read
+  older saves, and the test-mode hooks.
 * At build time `tools/stimpak_tree.py` mirrors the engine's `src/` into the build
   folder, applies the patches there and adds Stimpak's sources; CMake
   (`cmake/Stimpak.cmake`) compiles the game from that tree. Only changed files are

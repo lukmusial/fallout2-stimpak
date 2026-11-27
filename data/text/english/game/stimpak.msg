@@ -12,6 +12,7 @@
 
 {110}{}{This game was saved during combat and cannot be edited.}
 {111}{}{Leave without saving your changes?}
+{112}{}{Saved before the mods installed now; read with their additions.}
 
 {120}{}{PERKS}
 {121}{}{LEVEL}

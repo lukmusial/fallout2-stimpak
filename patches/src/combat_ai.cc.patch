@@ -1,0 +1,25 @@
+Stimpak patch for src/combat_ai.cc (engine commit c30f1efce64b).
+
+diff --git a/src/combat_ai.cc b/src/combat_ai.cc
+index 87188103..fe324d2a 100644
+--- a/src/combat_ai.cc
++++ b/src/combat_ai.cc
+@@ -36,6 +36,7 @@
+ #include "sfall_script_hooks.h"
+ #include "skill.h"
+ #include "stat.h"
++#include "stimpak_saves.h"
+ #include "svga.h"
+ #include "text_object.h"
+ #include "tile.h"
+@@ -552,7 +553,9 @@ int aiExit()
+ // 0x427AD8
+ int aiLoad(File* stream)
+ {
+-    for (int index = 0; index < gPartyMemberDescriptionsLength; index++) {
++    // STIMPAK: a save of the unmodded game has fewer party members.
++    int count = stimpakSavesPartyCount(gPartyMemberDescriptionsLength);
++    for (int index = 0; index < count; index++) {
+         const ProtoId protoId = gPartyMemberProtoIds[index];
+         if (protoId.valid() && protoId.objectType() == OBJ_TYPE_CRITTER) {
+             Proto* proto;

@@ -1,10 +1,18 @@
 Stimpak patch for src/loadsave.cc (engine commit c30f1efce64b).
 
 diff --git a/src/loadsave.cc b/src/loadsave.cc
-index 044a0446..e3ee3d30 100644
+index 044a0446..892fd297 100644
 --- a/src/loadsave.cc
 +++ b/src/loadsave.cc
-@@ -369,6 +369,14 @@ static constexpr char kLoadSaveSlotDataSection[] = "POSITION";
+@@ -55,6 +55,7 @@
+ #include "sfall_global_vars.h"
+ #include "skill.h"
+ #include "stat.h"
++#include "stimpak_saves.h"
+ #include "string_utils.h"
+ #include "svga.h"
+ #include "text_font.h"
+@@ -369,6 +370,14 @@ static constexpr char kLoadSaveSlotDataSection[] = "POSITION";
  static constexpr char kLoadSaveSlotDataKey[] = "CurrentSlot";
  static constexpr char kLoadSaveSlotDataFile[] = "SAVEGAME\\slotdat.ini";
  
@@ -19,7 +27,7 @@ index 044a0446..e3ee3d30 100644
  static void loadSaveRememberSelectedSlot()
  {
      assert(_patches != nullptr);
-@@ -625,6 +633,17 @@ int lsgSaveGame(LoadSaveMode mode)
+@@ -625,6 +634,17 @@ int lsgSaveGame(LoadSaveMode mode)
          return -1;
      }
  
@@ -37,3 +45,41 @@ index 044a0446..e3ee3d30 100644
      switch (_LSstatus[_slot_cursor]) {
      case LoadSaveSlotState::Empty:
      case LoadSaveSlotState::Error:
+@@ -2064,6 +2084,9 @@ static int lsgLoadGameInSlot(int slot)
+ 
+     debugPrint("LOADSAVE: Load file header size read: %ld bytes.\n", fileTell(_flptr) - pos);
+ 
++    // STIMPAK: saves of the unmodded game on a modded one (stimpak_saves.h).
++    stimpakSavesBeginLoad(_gmpath);
++
+     for (int index = 0; index < LOAD_SAVE_HANDLER_COUNT; index += 1) {
+         long pos = fileTell(_flptr);
+         LoadGameHandler* handler = _master_load_list[index];
+@@ -2072,6 +2095,7 @@ static int lsgLoadGameInSlot(int slot)
+             int v12 = fileTell(_flptr);
+             debugPrint("LOADSAVE: Load function #%d data size read: %ld bytes.\n", index, fileTell(_flptr) - pos);
+             fileClose(_flptr);
++            stimpakSavesEndLoad(false);
+             gameReset();
+             _loadingGame = false;
+             _loadingMapId = -1;
+@@ -2082,6 +2106,7 @@ static int lsgLoadGameInSlot(int slot)
+     }
+ 
+     _loadingMapId = -1;
++    stimpakSavesEndLoad(true);
+ 
+     debugPrint("LOADSAVE: Total load data read: %ld bytes.\n", fileTell(_flptr));
+     fileClose(_flptr);
+@@ -2819,7 +2844,10 @@ static int _SlotMap2Game(File* stream)
+     snprintf(_str0, sizeof(_str0), "%s\\%s\\%s", _patches, "MAPS", "AUTOMAP.DB");
+     compat_remove(_str0);
+ 
+-    for (int index = 1; index < gPartyMemberDescriptionsLength; index += 1) {
++    // STIMPAK: a save of the unmodded game has no protos for the party
++    // members a mod adds; they keep the game's own.
++    int partyCount = stimpakSavesPartyCount(gPartyMemberDescriptionsLength);
++    for (int index = 1; index < partyCount; index += 1) {
+         const ProtoId protoId = gPartyMemberProtoIds[index];
+         if (protoId.valid()) {
+             char protoPath[COMPAT_MAX_PATH];

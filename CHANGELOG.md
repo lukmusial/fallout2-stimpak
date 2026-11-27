@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.0
+
+One package for the unmodded game and the Fallout 2 Restoration Project (RPU).
+
+* Saved games from before RPU (or another mod with more global variables and
+  party members) was installed load on the modded game, from STIMPAK and from
+  LOAD GAME. Stimpak sees that a save holds the 1.02 patch's 696 global
+  variables and 26 party members, reads those, and leaves the mod's additions
+  at their starting values (moving the one variable RPU moved). Saving writes
+  an ordinary save of the modded game. A message in the game says when a save
+  is read this way.
+* Tested on RPU v2.4.34: all tests pass with RPU installed, and ten saves from
+  before RPU load with the same player, party, quests and world as on the
+  unmodded game.
+* Tests: `--game-dir` may be a modded game folder; `test_old_saves` loads
+  saves made without the mod; an unchanged save is compared with the game's
+  own re-save (RPU's scripts change a variable on the first load).
+* INSTALL.md: installing on RPU, and where RPU's installer moves your saves.
+* Location: the TRAVEL button sits inside the card, right-aligned, instead of
+  on the card's lower edge where its label was cut off.
+
 ## 1.0.2
 
 * The high-resolution main menu (screens larger than 640x480 with the game's

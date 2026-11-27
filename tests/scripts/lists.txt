@@ -32,7 +32,7 @@ key +
 key +
 wait 300
 shot location
-click 460 316
+click 503 301
 wait 800
 shot travel_confirm
 key enter
